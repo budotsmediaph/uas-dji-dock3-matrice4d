@@ -120,10 +120,10 @@
   .speed { font: 600 11.5px/1 var(--mono); color: var(--ink); background: var(--panel-2); border: 1px solid var(--rule); border-radius: 8px; padding: 9px 10px; cursor: pointer; }
 
   .pins { position: absolute; inset: 0; pointer-events: none; }
-  .pin { position: absolute; left: 0; top: 0; height: 22px; min-width: 22px; padding: 0 5px; box-sizing: border-box; margin: -11px 0 0 -11px;
-    border-radius: 11px; border: 1.5px solid var(--accent-fill); background: var(--glass); color: var(--ink);
+  .pin { position: absolute; left: 0; top: 0; height: 14px; min-width: 14px; padding: 0 3px; box-sizing: border-box; margin: -7px 0 0 -7px;
+    border-radius: 7px; border: 1px solid var(--accent-fill); background: var(--glass); color: var(--ink);
     font: 600 10px/19px var(--mono); text-align: center; pointer-events: auto; cursor: pointer; transition: opacity .2s; backdrop-filter: blur(6px); }
-  .pin.wide { margin-left: -15px; }
+  .pin.wide { margin-left: -10px; }
   .pin.occ { opacity: 0; pointer-events: none; }
   .pin[aria-pressed="true"] { background: var(--accent-fill); color: var(--on-accent); opacity: 1; pointer-events: auto; z-index: 2; }
   .tag { position: absolute; left: 0; top: 0; pointer-events: none; background: var(--ink); color: var(--panel); font: 600 13px/1.25 var(--display);
@@ -268,9 +268,11 @@
     font-family: var(--pixel); font-size: 8px; font-weight: 400; letter-spacing: .06em; -webkit-font-smoothing: none; }
   .blocks span { line-height: 26px; }
   .times { line-height: 12px; }
-  .pin, .tag, .tag b, .seg.small button, .loading {
+  .pin, .tag b, .seg.small button, .loading {
     font-family: var(--pixel); font-size: 16px; font-weight: 400; letter-spacing: .02em; -webkit-font-smoothing: none; }
-  .pin { line-height: 19px; }
+  .pin { font-size: 8px; line-height: 12px; }  /* pixel face at its native 8 px (owner, 16 Oct 2026) */
+  .tag { font: 500 12px/1.3 var(--mono); }  /* caption: terminal face; pixel face only for the 8 px part number */
+  .tag b { font-size: 8px; line-height: 1; }
   svg text { font-family: var(--pixel); font-weight: 400; letter-spacing: .04em; }
 </style>
 
