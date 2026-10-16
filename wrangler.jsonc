@@ -1,0 +1,13 @@
+{
+  // budotsmedia.com/uas/dji-dock3-matrice4d: the Dock 3 mission viewer as static assets (16 Oct 2026).
+  // The /uas/ index and the rest of budotsmedia.com stay with the site's Worker budotsmedia-260818.
+  "name": "uas-dji-dock3-matrice4d",
+  "account_id": "1ddb1d70501c190c2bb95be0108aa771",
+  "compatibility_date": "2026-10-01",
+  "assets": { "directory": "./site", "html_handling": "auto-trailing-slash", "not_found_handling": "404-page" },
+  "workers_dev": false,
+  "routes": [
+    { "pattern": "budotsmedia.com/uas/dji-dock3-matrice4d*", "zone_name": "budotsmedia.com" },
+    { "pattern": "www.budotsmedia.com/uas/dji-dock3-matrice4d*", "zone_name": "budotsmedia.com" }
+  ]
+}

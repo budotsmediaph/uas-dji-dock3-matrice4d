@@ -1,0 +1,281 @@
+{
+  "spec": {
+    "open_mm": [
+      1760,
+      745,
+      485
+    ],
+    "closed_mm": [
+      640,
+      745,
+      770
+    ],
+    "rtk_mm": 160,
+    "gauge_mm": 145,
+    "bracket_mm": 58,
+    "aircraft_mm": [
+      377.7,
+      416.2,
+      212.5
+    ],
+    "wheelbase_mm": {
+      "diagonal": 498.5,
+      "front_lr": 383.0,
+      "rear_lr": 343.0,
+      "front_rear": 341.6
+    },
+    "mount_holes_mm": [
+      554,
+      400
+    ],
+    "concrete_base_mm": [
+      700,
+      700,
+      100
+    ],
+    "charging": {
+      "output_v": 35,
+      "minutes": 27,
+      "from_pct": 15,
+      "to_pct": 95
+    },
+    "temperature_c": {
+      "dock": [
+        -30,
+        50
+      ],
+      "aircraft": [
+        -20,
+        50
+      ]
+    },
+    "wind_max_ms": 12,
+    "humidity_max_pct": 93,
+    "rain_max_mmh": 2
+  },
+  "validation": {
+    "closed": {
+      "model_mm": [
+        640.0,
+        745.0,
+        770.0
+      ],
+      "spec_mm": [
+        640,
+        745,
+        770
+      ],
+      "ok": true,
+      "source": "model"
+    },
+    "open": {
+      "model_mm": [
+        1760.0,
+        745.0,
+        485.0
+      ],
+      "spec_mm": [
+        1760,
+        745,
+        485
+      ],
+      "ok": true,
+      "source": "model"
+    },
+    "aircraft": {
+      "model_mm": [
+        377.7,
+        416.2,
+        212.5
+      ],
+      "spec_mm": [
+        377.7,
+        416.2,
+        212.5
+      ],
+      "ok": true,
+      "source": "model"
+    }
+  },
+  "timeline": {
+    "fps": 30,
+    "frames": {
+      "open0": 30,
+      "open1": 120,
+      "spin0": 120,
+      "spin1": 150,
+      "up0": 150,
+      "up1": 225,
+      "loop0": 225,
+      "loop1": 495,
+      "down0": 495,
+      "down1": 585,
+      "stop0": 585,
+      "stop1": 615,
+      "close0": 615,
+      "close1": 705,
+      "charge0": 705,
+      "charge1": 945,
+      "end": 975
+    },
+    "markers": {
+      "Closed": 0,
+      "Cover open": 120,
+      "Take-off": 150,
+      "Orbit": 285,
+      "Landing": 495,
+      "Cover closing": 615,
+      "Charging": 705,
+      "End": 975
+    },
+    "battery": {
+      "full": 95.0,
+      "low": 15.0,
+      "charge_minutes": 27,
+      "charge_curve": 1.6,
+      "output_v": 35
+    }
+  },
+  "hotspots": [
+    {
+      "group": "dock",
+      "id": "1",
+      "label": "Wind Speed Gauge"
+    },
+    {
+      "group": "dock",
+      "id": "2",
+      "label": "Dock Camera"
+    },
+    {
+      "group": "dock",
+      "id": "3",
+      "label": "Camera Auxiliary Light"
+    },
+    {
+      "group": "dock",
+      "id": "4",
+      "label": "Rainfall Gauge"
+    },
+    {
+      "group": "dock",
+      "id": "5",
+      "label": "Dock Cover"
+    },
+    {
+      "group": "dock",
+      "id": "6",
+      "label": "Positioning Markers"
+    },
+    {
+      "group": "dock",
+      "id": "7",
+      "label": "Landing Pad (built-in charging module)"
+    },
+    {
+      "group": "dock",
+      "id": "8",
+      "label": "Aircraft Orientation Marker"
+    },
+    {
+      "group": "dock",
+      "id": "9",
+      "label": "PoE Output Port"
+    },
+    {
+      "group": "dock",
+      "id": "10",
+      "label": "AC-IN Port"
+    },
+    {
+      "group": "dock",
+      "id": "11",
+      "label": "Earth Wire"
+    },
+    {
+      "group": "dock",
+      "id": "12",
+      "label": "Electrical Cabinet"
+    },
+    {
+      "group": "dock",
+      "id": "13",
+      "label": "LAN-IN Port"
+    },
+    {
+      "group": "dock",
+      "id": "14",
+      "label": "Mounting Base Brackets"
+    },
+    {
+      "group": "dock",
+      "id": "15",
+      "label": "Emergency Stop Button"
+    },
+    {
+      "group": "dock",
+      "id": "16",
+      "label": "Status Indicators"
+    },
+    {
+      "group": "dock",
+      "id": "17",
+      "label": "Cellular Dongle Compartment"
+    },
+    {
+      "group": "dock",
+      "id": "18",
+      "label": "RTK Module"
+    },
+    {
+      "group": "dock",
+      "id": "19",
+      "label": "For Vehicle-mounted Gimbal Mount"
+    },
+    {
+      "group": "dock",
+      "id": "20",
+      "label": "E-Port"
+    },
+    {
+      "group": "dock",
+      "id": "21",
+      "label": "Drain Pipe Hole (underneath)"
+    },
+    {
+      "group": "aircraft",
+      "id": "A1",
+      "label": "Gimbal Camera"
+    },
+    {
+      "group": "aircraft",
+      "id": "A5",
+      "label": "Internal Charging Modules"
+    },
+    {
+      "group": "aircraft",
+      "id": "A6",
+      "label": "Front LEDs"
+    },
+    {
+      "group": "aircraft",
+      "id": "A9",
+      "label": "Propellers (1364F folding)"
+    },
+    {
+      "group": "aircraft",
+      "id": "A12",
+      "label": "Intelligent Flight Battery"
+    },
+    {
+      "group": "aircraft",
+      "id": "A14",
+      "label": "Battery Level LEDs"
+    },
+    {
+      "group": "aircraft",
+      "id": "A19",
+      "label": "GNSS/RTK Antenna"
+    }
+  ]
+}

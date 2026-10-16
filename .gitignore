@@ -1,0 +1,7 @@
+# generated: rebuild with blender/build.py and web/build_viewer.py
+site/
+web/artifact.html
+*.blend1
+build.log
+.wrangler/
+.DS_Store

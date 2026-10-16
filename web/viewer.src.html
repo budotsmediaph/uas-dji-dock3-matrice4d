@@ -1,0 +1,1347 @@
+<title>UAS · DJI Dock 3 + Matrice 4D</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700;800&family=Silkscreen:wght@400;700&display=swap">
+<style>
+  :root {
+    --page: #e6e9ec;
+    --panel: #f7f8f9;
+    --panel-2: #eef1f3;
+    --ink: #0f1418;
+    --ink-2: #56626d;
+    --ink-3: #8a959f;
+    --rule: #d2d9df;
+    --accent: #07798a;
+    --accent-fill: #16b2c5;
+    --on-accent: #02262c;
+    --stage-top: #f3f5f7;
+    --stage-horizon: #d4dbe1;
+    --floor: #cdd4da;
+    --floor-tint: #9aa3ab;
+    --stage-cold: #b7c8d8;
+    --stage-hot: #e6d6bf;
+    --band-idle: #d9dfe4;
+    --band-dock: #b8c3cc;
+    --band-flight: #f3c969;
+    --band-charge: #7fd3dd;
+    --ok: #1f7a4b;  --ok-bg: #d8efe2;
+    --caution: #7a560c; --caution-bg: #f7e8c8;
+    --hold: #a61f18; --hold-bg: #f8dbd7;
+    --info: #1f5a8c; --info-bg: #dbe7f3;
+    --glass: rgba(247, 248, 249, .82);
+    --shadow: 0 1px 2px rgba(15, 20, 24, .06), 0 8px 24px rgba(15, 20, 24, .08);
+    /* type shared with the Dock 4 pages: one terminal face for text, one pixel face for every sign */
+    --display: "JetBrains Mono", ui-monospace, Menlo, Consolas, monospace;
+    --mono: "JetBrains Mono", ui-monospace, Menlo, Consolas, monospace;
+    --pixel: "Silkscreen", "JetBrains Mono", monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --page: #090c0e; --panel: #111519; --panel-2: #161b20; --ink: #e8edf0; --ink-2: #8e9aa5; --ink-3: #5d6873; --rule: #222a31;
+      --accent: #5fd6e5; --accent-fill: #29c4d7; --on-accent: #01262b;
+      --stage-top: #1c2329; --stage-horizon: #0c1013; --floor: #0b0e11; --floor-tint: #3d444b;
+      --stage-cold: #0c1a26; --stage-hot: #241b0f;
+      --band-idle: #1e252b; --band-dock: #37424b; --band-flight: #8f6f1f; --band-charge: #1f7780;
+      --ok: #6fcf98; --ok-bg: #15301f; --caution: #ebc36b; --caution-bg: #302508; --hold: #f38a80; --hold-bg: #381612; --info: #8dbbe3; --info-bg: #142538;
+      --glass: rgba(17, 21, 25, .78); --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 10px 30px rgba(0, 0, 0, .35);
+    }
+  }
+  :root[data-theme="dark"] {
+    --page: #090c0e; --panel: #111519; --panel-2: #161b20; --ink: #e8edf0; --ink-2: #8e9aa5; --ink-3: #5d6873; --rule: #222a31;
+    --accent: #5fd6e5; --accent-fill: #29c4d7; --on-accent: #01262b;
+    --stage-top: #1c2329; --stage-horizon: #0c1013; --floor: #0b0e11; --floor-tint: #3d444b;
+    --stage-cold: #0c1a26; --stage-hot: #241b0f;
+    --band-idle: #1e252b; --band-dock: #37424b; --band-flight: #8f6f1f; --band-charge: #1f7780;
+    --ok: #6fcf98; --ok-bg: #15301f; --caution: #ebc36b; --caution-bg: #302508; --hold: #f38a80; --hold-bg: #381612; --info: #8dbbe3; --info-bg: #142538;
+    --glass: rgba(17, 21, 25, .78); --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 10px 30px rgba(0, 0, 0, .35);
+  }
+
+  html, body { height: 100%; }
+  body { background: var(--page); color: var(--ink); font: 400 15px/1.45 var(--display); font-stretch: 100%; -webkit-font-smoothing: antialiased; }
+  .app { box-sizing: border-box; height: 100%; padding: 16px; display: grid; grid-template-columns: minmax(0, 1fr) 404px; gap: 16px; }
+  .num { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+
+  /* ---------------------------------------------------------------- stage */
+  .stage { position: relative; min-height: 0; overflow: hidden; border-radius: 16px; background: var(--stage-horizon); }
+  .stage canvas { display: block; width: 100%; height: 100%; outline: none; }
+  .loading { position: absolute; inset: 0; display: grid; place-items: center; padding: 16px; text-align: center;
+    font: 600 12px/1.5 var(--mono); letter-spacing: .14em; text-transform: uppercase; color: var(--ink-2); }
+  .glass { background: var(--glass); backdrop-filter: blur(14px) saturate(1.2); -webkit-backdrop-filter: blur(14px) saturate(1.2);
+    border: 1px solid color-mix(in srgb, var(--rule) 70%, transparent); border-radius: 12px; box-shadow: var(--shadow); }
+  .hud { position: absolute; top: 14px; left: 14px; right: 14px; display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; pointer-events: none; }
+  .hud-left { display: flex; flex-direction: column; gap: 8px; min-width: 0; max-width: min(380px, 60%); }
+  .mission { padding: 12px 14px 12px; display: grid; gap: 8px; }
+  .kicker { font: 600 10.5px/1 var(--mono); letter-spacing: .16em; text-transform: uppercase; color: var(--ink-3); }
+  .mission h2 { margin: 0; font: 700 22px/1.08 var(--display); font-stretch: 88%; letter-spacing: -.01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .meter { display: flex; align-items: center; gap: 10px; }
+  .cells { display: flex; gap: 3px; }
+  .cells i { width: 16px; height: 8px; border-radius: 2px; background: var(--band-idle); transition: background .12s; }
+  .cells i.on { background: var(--ok); }
+  .cells i.flash { background: color-mix(in srgb, var(--ok) 45%, var(--band-idle)); }
+  .meter .num { font-size: 12.5px; color: var(--ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .meter .num b { color: var(--ink); font-weight: 600; }
+  .mission.charging .meter .num { color: var(--accent); }
+  .mission.held .meter .num { color: var(--hold); }
+  .alerts { display: flex; flex-direction: column; gap: 6px; }
+  .alert { display: flex; gap: 10px; align-items: baseline; padding: 8px 11px; border-radius: 10px; font: 500 13px/1.3 var(--display); }
+  .alert b { flex: none; font: 600 10px/1 var(--mono); letter-spacing: .14em; text-transform: uppercase; }
+  .alert.hold { background: var(--hold-bg); color: var(--hold); }
+  .alert.caution { background: var(--caution-bg); color: var(--caution); }
+  .alert.more { background: var(--glass); color: var(--ink-2); }
+  .hud-right { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; pointer-events: auto; }
+  .seg { display: flex; padding: 3px; gap: 2px; }
+  .seg button { font: 600 12.5px/1 var(--display); letter-spacing: .02em; color: var(--ink-2); background: none; border: 0; border-radius: 8px; padding: 8px 11px; cursor: pointer; }
+  .seg button[aria-pressed="true"] { background: var(--ink); color: var(--panel); }
+  .seg button:hover:not([aria-pressed="true"]) { color: var(--ink); }
+  .seg.small button { font: 500 11px/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; padding: 7px 9px; }
+
+  .deck { position: absolute; left: 14px; right: 14px; bottom: 14px; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 14px; padding: 10px 14px 10px 10px; }
+  .play { width: 44px; height: 44px; border-radius: 10px; border: 0; background: var(--ink); color: var(--panel); display: grid; place-items: center; cursor: pointer; }
+  .play svg { width: 16px; height: 16px; }
+  .track { position: relative; height: 44px; }
+  .blocks { position: absolute; inset: 0 0 18px 0; display: flex; gap: 2px; }
+  .blocks span { position: relative; height: 100%; border-radius: 5px; overflow: hidden; min-width: 0;
+    font: 600 10px/26px var(--mono); letter-spacing: .08em; text-transform: uppercase; color: color-mix(in srgb, var(--ink) 75%, transparent);
+    padding: 0 6px; white-space: nowrap; text-overflow: clip; opacity: .8; transition: opacity .15s; }
+  .blocks span.now { opacity: 1; box-shadow: inset 0 0 0 1.5px var(--ink); }
+  .blocks span.tight { color: transparent; }
+  .blocks .idle { background: var(--band-idle); } .blocks .dock { background: var(--band-dock); }
+  .blocks .flight { background: var(--band-flight); } .blocks .charge { background: var(--band-charge); }
+  .playhead { position: absolute; top: -3px; bottom: 15px; width: 2px; margin-left: -1px; background: var(--ink); border-radius: 1px; pointer-events: none; }
+  .playhead::after { content: ""; position: absolute; left: -4px; top: -3px; width: 10px; height: 10px; border-radius: 50%; background: var(--ink); box-shadow: 0 0 0 2px var(--panel); }
+  #scrub { position: absolute; inset: 0 0 14px 0; width: 100%; height: 30px; margin: 0; opacity: 0; cursor: pointer; }
+  .times { position: absolute; left: 0; right: 0; bottom: 0; height: 12px; display: flex; justify-content: space-between; font: 500 10.5px/12px var(--mono); color: var(--ink-3); }
+  .times b { color: var(--ink); font-weight: 600; }
+  .speed { font: 600 11.5px/1 var(--mono); color: var(--ink); background: var(--panel-2); border: 1px solid var(--rule); border-radius: 8px; padding: 9px 10px; cursor: pointer; }
+
+  .pins { position: absolute; inset: 0; pointer-events: none; }
+  .pin { position: absolute; left: 0; top: 0; height: 22px; min-width: 22px; padding: 0 5px; box-sizing: border-box; margin: -11px 0 0 -11px;
+    border-radius: 11px; border: 1.5px solid var(--accent-fill); background: var(--glass); color: var(--ink);
+    font: 600 10px/19px var(--mono); text-align: center; pointer-events: auto; cursor: pointer; transition: opacity .2s; backdrop-filter: blur(6px); }
+  .pin.wide { margin-left: -15px; }
+  .pin.occ { opacity: 0; pointer-events: none; }
+  .pin[aria-pressed="true"] { background: var(--accent-fill); color: var(--on-accent); opacity: 1; pointer-events: auto; z-index: 2; }
+  .tag { position: absolute; left: 0; top: 0; pointer-events: none; background: var(--ink); color: var(--panel); font: 600 13px/1.25 var(--display);
+    padding: 7px 10px; border-radius: 8px; white-space: nowrap; box-shadow: var(--shadow); z-index: 3; }
+  .tag b { font: 600 11px/1 var(--mono); color: var(--accent-fill); margin-right: 7px; }
+
+  /* ---------------------------------------------------------------- rail */
+  .rail { min-height: 0; overflow-y: auto; background: var(--panel); border-radius: 16px; border: 1px solid var(--rule);
+    padding: 24px 22px 26px; display: flex; flex-direction: column; gap: 22px; }
+  .masthead .kicker { color: var(--accent); }
+  h1 { margin: 8px 0 10px; font: 800 34px/.98 var(--display); font-stretch: 78%; letter-spacing: -.015em; text-wrap: balance; }
+  h1 span { display: block; font: 500 14.5px/1.35 var(--display); font-stretch: 100%; letter-spacing: 0; color: var(--ink-2); margin-top: 10px; }
+  .masthead p { margin: 0; color: var(--ink-2); max-width: 62ch; }
+  .tabs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 3px; padding: 3px; background: var(--panel-2); border-radius: 11px; border: 1px solid var(--rule); }
+  .tabs button { font: 600 13px/1 var(--display); color: var(--ink-2); background: none; border: 0; border-radius: 8px; padding: 10px 6px; cursor: pointer;
+    display: inline-flex; justify-content: center; align-items: center; gap: 6px; }
+  .tabs button[aria-selected="true"] { background: var(--panel); color: var(--ink); box-shadow: 0 1px 2px rgba(0, 0, 0, .08), 0 0 0 1px var(--rule); }
+  .count { display: inline-grid; place-items: center; min-width: 18px; height: 18px; padding: 0 5px; box-sizing: border-box; border-radius: 9px;
+    font: 600 10.5px/1 var(--mono); background: var(--hold-bg); color: var(--hold); }
+  .count.caution { background: var(--caution-bg); color: var(--caution); }
+  .panel { display: flex; flex-direction: column; gap: 26px; }
+  h3 { margin: 0 0 12px; font: 600 10.5px/1.2 var(--mono); letter-spacing: .16em; text-transform: uppercase; color: var(--ink-3);
+    display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+  h3 small { font: 400 12px/1.2 var(--display); letter-spacing: 0; text-transform: none; color: var(--ink-3); }
+
+  .dims { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+  .dims th, .dims td { padding: 8px 0; border-bottom: 1px solid var(--rule); }
+  .dims thead th { font: 600 10.5px/1 var(--mono); letter-spacing: .12em; color: var(--ink-3); text-align: right; padding-top: 0; }
+  .dims thead th:first-child { text-align: left; }
+  .dims tbody th { text-align: left; font: 500 14px/1.25 var(--display); color: var(--ink-2); }
+  .dims td { text-align: right; font: 500 14px/1.2 var(--mono); width: 17%; }
+  .dims tr.now th, .dims tr.now td { color: var(--ink); font-weight: 600; }
+  .dims tr.hit th, .dims tr.hit td { color: var(--ok); }
+  .dims tr.hit th::after { content: "  ✓"; }
+  .status { margin-top: 12px; display: inline-flex; align-items: center; gap: 8px; font: 600 12.5px/1 var(--display); padding: 8px 12px; border-radius: 999px; background: var(--panel-2); color: var(--ink-2); }
+  .status::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+  .status.ok { background: var(--ok-bg); color: var(--ok); }
+  .status.move { background: var(--caution-bg); color: var(--caution); }
+  .note { margin: 10px 0 0; font-size: 13px; line-height: 1.5; color: var(--ink-2); }
+  .spaced { margin-top: 20px; }
+  .facts { margin: 0; display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 7px 16px; font-size: 14px; }
+  .facts dt { color: var(--ink-2); }
+  .facts dd { margin: 0; }
+  .facts dd .num { font-weight: 600; }
+
+  .switch { display: grid; grid-template-columns: 36px minmax(0, 1fr); align-items: center; gap: 12px; padding: 9px 0; cursor: pointer; border-bottom: 1px solid var(--rule); }
+  .switch:last-child { border-bottom: 0; }
+  .switch input { -webkit-appearance: none; appearance: none; margin: 0; width: 36px; height: 21px; border-radius: 11px; background: var(--panel-2);
+    border: 1px solid var(--rule); position: relative; cursor: pointer; transition: background .15s; }
+  .switch input::after { content: ""; position: absolute; top: 2px; left: 2px; width: 15px; height: 15px; border-radius: 50%; background: var(--ink-3); transition: transform .15s, background .15s; }
+  .switch input:checked { background: var(--accent-fill); border-color: var(--accent-fill); }
+  .switch input:checked::after { transform: translateX(15px); background: var(--on-accent); }
+  .switch span { font-weight: 500; }
+  .switch small { display: block; font-weight: 400; font-size: 12.5px; color: var(--ink-2); }
+
+  .parts { list-style: none; margin: 0; padding: 0; display: grid; gap: 1px; }
+  .parts button { width: 100%; display: grid; grid-template-columns: 38px minmax(0, 1fr); gap: 10px; align-items: center; text-align: left;
+    background: none; border: 0; border-radius: 8px; padding: 5px 6px; color: var(--ink); font: 400 14px/1.3 var(--display); cursor: pointer; }
+  .parts button:hover, .parts button[aria-pressed="true"] { background: var(--panel-2); }
+  .parts .n { justify-self: start; min-width: 22px; height: 22px; padding: 0 5px; box-sizing: border-box; border-radius: 11px; border: 1.5px solid var(--accent-fill);
+    font: 600 10px/19px var(--mono); text-align: center; }
+  .parts button[aria-pressed="true"] .n { background: var(--accent-fill); color: var(--on-accent); }
+  .group-label { font: 600 12.5px/1.2 var(--display); color: var(--ink-2); margin: 16px 0 6px; }
+  .group-label:first-child { margin-top: 0; }
+
+  .verdict { display: grid; grid-template-columns: 10px minmax(0, 1fr); gap: 12px; padding: 14px 16px; border-radius: 12px; background: var(--ok-bg); color: var(--ok); }
+  .verdict::before { content: ""; width: 10px; height: 10px; border-radius: 50%; background: currentColor; margin-top: 6px; }
+  .verdict.hold { background: var(--hold-bg); color: var(--hold); }
+  .verdict.caution { background: var(--caution-bg); color: var(--caution); }
+  .verdict b { display: block; font: 700 19px/1.15 var(--display); font-stretch: 88%; }
+  .verdict span { display: block; font-size: 13.5px; color: var(--ink); margin-top: 3px; }
+  .readouts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1px; background: var(--rule); border: 1px solid var(--rule); border-radius: 12px; overflow: hidden; }
+  .readouts div { background: var(--panel); padding: 10px 12px; }
+  .readouts .k { display: block; font: 600 10px/1.2 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--ink-3); }
+  .readouts .v { display: block; font: 600 18px/1.3 var(--mono); margin-top: 3px; }
+  .readouts .v small { font-size: 11.5px; font-weight: 500; color: var(--ink-2); }
+  .checks { list-style: none; margin: 0; padding: 0; }
+  .check { display: grid; grid-template-columns: 64px minmax(0, 1fr); gap: 12px; align-items: start; padding: 11px 0; border-bottom: 1px solid var(--rule); }
+  .check:last-child { border-bottom: 0; }
+  .sev { font: 600 10px/1 var(--mono); letter-spacing: .12em; text-transform: uppercase; padding: 6px 0; border-radius: 6px; text-align: center; background: var(--panel-2); color: var(--ink-2); }
+  .sev.hold { background: var(--hold-bg); color: var(--hold); }
+  .sev.caution { background: var(--caution-bg); color: var(--caution); }
+  .sev.info { background: var(--info-bg); color: var(--info); }
+  .check b, .issue b { display: block; font: 700 15.5px/1.25 var(--display); font-stretch: 92%; }
+  .check p { margin: 3px 0 0; font-size: 13.5px; color: var(--ink-2); }
+  .src { display: block; margin-top: 5px; font: 500 11px/1.35 var(--mono); color: var(--ink-3); }
+  .group-title { margin: 6px 0 -8px; font: 600 10.5px/1.2 var(--mono); letter-spacing: .16em; text-transform: uppercase; color: var(--ink-3); }
+  .ctl { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 12px; padding: 6px 0 16px; }
+  .ctl label { font-weight: 500; }
+  .ctl output { font: 600 13.5px/1.5 var(--mono); }
+  .rangebox { grid-column: 1 / -1; position: relative; padding-bottom: 12px; }
+  .rangebox input { width: 100%; margin: 6px 0 0; -webkit-appearance: none; appearance: none; background: none; height: 22px; cursor: pointer; }
+  .rangebox input::-webkit-slider-runnable-track { height: 4px; border-radius: 2px; background: var(--rule); }
+  .rangebox input::-moz-range-track { height: 4px; border-radius: 2px; background: var(--rule); }
+  .rangebox input::-webkit-slider-thumb { -webkit-appearance: none; width: 18px; height: 18px; margin-top: -7px; border-radius: 50%; background: var(--panel); border: 2px solid var(--ink); }
+  .rangebox input::-moz-range-thumb { width: 14px; height: 14px; border-radius: 50%; background: var(--panel); border: 2px solid var(--ink); }
+  .marks { position: absolute; left: 9px; right: 9px; bottom: 0; height: 12px; }
+  .marks span { position: absolute; transform: translateX(-50%); font: 600 10px/1 var(--mono); color: var(--hold); white-space: nowrap; }
+  .marks span::before { content: ""; position: absolute; left: 50%; top: -9px; width: 1.5px; height: 6px; background: currentColor; }
+  .marks span.soft { color: var(--ink-3); }
+  .btn { justify-self: start; font: 600 13px/1 var(--display); padding: 11px 15px; border-radius: 9px; border: 1px solid var(--rule); background: var(--panel-2); color: var(--ink); cursor: pointer; }
+  .btn:hover { border-color: var(--ink-3); }
+  .lede { margin: 0; color: var(--ink-2); }
+  .issues { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+  .issue { width: 100%; text-align: left; cursor: pointer; color: var(--ink); display: grid; grid-template-columns: 64px minmax(0, 1fr); gap: 12px; align-items: start;
+    background: var(--panel); border: 1px solid var(--rule); border-radius: 12px; padding: 12px 13px; font: 400 14px/1.45 var(--display); }
+  .issue:hover { border-color: var(--ink-3); }
+  .issue[aria-pressed="true"] { border-color: var(--accent-fill); box-shadow: 0 0 0 1px var(--accent-fill); }
+  .issue .sum { display: block; margin-top: 4px; font-size: 13.5px; color: var(--ink-2); }
+  .sources { font-size: 12.5px; line-height: 1.5; color: var(--ink-2); border-top: 1px solid var(--rule); padding-top: 16px; }
+  .sources p { margin: 0 0 8px; }
+  .sources b { color: var(--ink); font-weight: 600; }
+  .sig { font: 500 11px/1.4 var(--mono); color: var(--ink-3); }
+
+  button:focus-visible, input:focus-visible, canvas:focus-visible { outline: 2px solid var(--accent-fill); outline-offset: 2px; }
+  @media (max-width: 920px) {
+    .app { height: auto; grid-template-columns: minmax(0, 1fr); grid-template-rows: min(68svh, 640px) auto; }
+    .stage { min-height: 400px; }
+    .rail { overflow: visible; }
+  }
+  @media (max-width: 580px) {
+    .speed { display: none; }
+    .deck { grid-template-columns: auto minmax(0, 1fr); }
+    .blocks span { font-size: 0; }
+    .mission h2 { font-size: 18px; }
+    .hud-left { max-width: 56%; }
+    .seg button { padding: 7px 7px; }
+    .alert { font-size: 12px; }
+  }
+  @media (prefers-reduced-motion: reduce) { .pin, .switch input, .switch input::after, .cells i { transition: none; } }
+  .crumbs { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 12px; color: var(--ink-3); }
+  .crumbs a { color: var(--ink-2); text-decoration: none; border-bottom: 1px solid var(--rule); }
+  .crumbs a:hover { color: var(--accent); border-color: var(--accent); }
+  .onpage { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-top: 12px; font: 600 12px/1.3 var(--mono); }
+  .onpage a { color: var(--accent); text-decoration: none; border-bottom: 1px solid color-mix(in srgb, var(--accent) 40%, transparent); }
+  /* ---------------------------------------------------------------- type: terminal text, pixel signs */
+  body { font-size: 14px; }
+  h1 { font-size: 28px; line-height: 1.08; font-stretch: 100%; letter-spacing: -.03em; }
+  .step-card h2, .phase-card h2 { font-stretch: 100%; letter-spacing: -.02em; }
+  .kicker, h3, .section label, .blocks span, .times, .slots thead th, .dims thead th, .chip, .steps .k, .known b, .crumbs, .group-label + .parts .n,
+  .meters .lbl, .cond label, .issue .tag2, table thead th {
+    font-family: var(--pixel); font-size: 8px; font-weight: 400; letter-spacing: .06em; -webkit-font-smoothing: none; }
+  .blocks span { line-height: 26px; }
+  .times { line-height: 12px; }
+  .pin, .tag, .tag b, .seg.small button, .loading {
+    font-family: var(--pixel); font-size: 16px; font-weight: 400; letter-spacing: .02em; -webkit-font-smoothing: none; }
+  .pin { line-height: 19px; }
+  svg text { font-family: var(--pixel); font-weight: 400; letter-spacing: .04em; }
+</style>
+
+<div class="app">
+  <section class="stage" id="stage" aria-label="3D model of the dock and aircraft">
+    <canvas id="view" tabindex="0" aria-label="Drag to orbit, scroll to zoom, space to play or pause"></canvas>
+    <div class="pins" id="pins"></div>
+    <div class="hud">
+      <div class="hud-left">
+        <div class="mission glass" id="mission" aria-live="polite">
+          <span class="kicker">Mission phase</span>
+          <h2 id="phase">Closed · standby</h2>
+          <div class="meter"><div class="cells" id="cells" aria-hidden="true"><i></i><i></i><i></i><i></i></div><span class="num" id="meter"><b>95 %</b> battery</span></div>
+        </div>
+        <div class="alerts" id="alerts"></div>
+      </div>
+      <div class="hud-right">
+        <div class="seg glass" role="group" aria-label="Camera">
+          <button type="button" data-view="three" aria-pressed="true">¾</button>
+          <button type="button" data-view="front" aria-pressed="false">Front</button>
+          <button type="button" data-view="top" aria-pressed="false">Top</button>
+          <button type="button" data-view="follow" aria-pressed="false">Follow</button>
+        </div>
+        <div class="seg small glass" role="group" aria-label="Render quality">
+          <button type="button" data-quality="high" aria-pressed="true">High</button>
+          <button type="button" data-quality="fast" aria-pressed="false">Fast</button>
+        </div>
+      </div>
+    </div>
+    <div class="deck glass">
+      <button type="button" class="play" id="play" aria-label="Pause mission">
+        <svg id="icoPause" viewBox="0 0 16 16" aria-hidden="true"><rect x="3" y="2" width="3.5" height="12" rx="1" fill="currentColor"/><rect x="9.5" y="2" width="3.5" height="12" rx="1" fill="currentColor"/></svg>
+        <svg id="icoPlay" viewBox="0 0 16 16" aria-hidden="true" hidden><path d="M4 2.2v11.6c0 .6.7 1 1.2.6l8.3-5.8a.75.75 0 0 0 0-1.2L5.2 1.6C4.7 1.2 4 1.6 4 2.2z" fill="currentColor"/></svg>
+      </button>
+      <div class="track">
+        <div class="blocks" id="blocks"></div>
+        <div class="playhead" id="playhead"></div>
+        <input id="scrub" type="range" min="0" max="32.5" step="0.01" value="0" aria-label="Mission time in seconds">
+        <div class="times"><span><b id="clock">0.0</b> s</span><span id="total">32.5 s</span></div>
+      </div>
+      <button type="button" class="speed" id="speed" aria-label="Playback speed">1×</button>
+    </div>
+    <div class="loading" id="loading">Loading model</div>
+  </section>
+
+  <aside class="rail">
+    <header class="masthead">
+      __SITE_NAV__<span class="kicker">Unofficial reconstruction</span>
+      <h1>DJI Dock 3 + Matrice 4D<span>Mission from launch to induction charging · built by Claude Opus 5.5</span></h1>
+      <p>Built in Blender from DJI's spec sheet and manuals, with the dock and the aircraft checked to the millimetre against every published size. Play the mission from launch to induction charging, change the weather, and see the problems the manuals warn about.</p>
+      <nav class="onpage" aria-label="Related pages"><a href="https://budotsmedia.com/uas/dji-dock4-matrice5td/" target="_blank" rel="noopener">Dock 4 + Matrice 5TD: battery swap ↗</a><a href="https://budotsmedia.com/uas/dji-dock4-matrice5td/case-study/" target="_blank" rel="noopener">Dock 4 case study ↗</a></nav>
+    </header>
+
+    <div class="tabs" role="tablist" aria-label="Viewer sections">
+      <button type="button" role="tab" id="tabModel" aria-controls="panelModel" aria-selected="true">Model</button>
+      <button type="button" role="tab" id="tabConditions" aria-controls="panelConditions" aria-selected="false">Conditions <span class="count" id="condCount" hidden>0</span></button>
+      <button type="button" role="tab" id="tabIssues" aria-controls="panelIssues" aria-selected="false">Issues</button>
+    </div>
+
+    <div class="panel" id="panelModel" role="tabpanel" aria-labelledby="tabModel">
+      <section>
+        <h3>Envelope check <small>mm</small></h3>
+        <table class="dims">
+          <thead><tr><th scope="col"><span hidden>Row</span></th><th scope="col">L</th><th scope="col">W</th><th scope="col">H</th></tr></thead>
+          <tbody>
+            <tr class="now"><th scope="row">Model, now</th><td id="mL">640</td><td id="mW">745</td><td id="mH">770</td></tr>
+            <tr id="rowClosed"><th scope="row">DJI spec, cover closed</th><td>640</td><td>745</td><td>770</td></tr>
+            <tr id="rowOpen"><th scope="row">DJI spec, cover open</th><td>1760</td><td>745</td><td>485</td></tr>
+          </tbody>
+        </table>
+        <div class="status" id="status">Measuring</div>
+        <p class="note">Measured live from the model as it moves. L runs in the direction the cover opens; like DJI's figures, it includes the RTK module (160 mm), wind speed gauge (145 mm) and mounting brackets (58 mm).</p>
+        <table class="dims spaced">
+          <thead><tr><th scope="col">Matrice 4D, __AC_SRC__</th><th scope="col">L</th><th scope="col">W</th><th scope="col">H</th></tr></thead>
+          <tbody>
+            <tr class="now"><th scope="row">Model</th><td>__AC_L__</td><td>__AC_W__</td><td>__AC_H__</td></tr>
+            <tr><th scope="row">DJI spec sheet</th><td>377.7</td><td>416.2</td><td>212.5</td></tr>
+          </tbody>
+        </table>
+        <p class="note">__AC_NOTE__</p>
+      </section>
+
+      <section>
+        <h3>Induction charging <small>after landing</small></h3>
+        <dl class="facts">
+          <dt>Output</dt><dd><span class="num">35 V DC</span></dd>
+          <dt>Charging time</dt><dd><span class="num">27 min</span>, 15 → 95 % at 25 °C</dd>
+          <dt>Transmitter</dt><dd>Charging module under the landing pad (7)</dd>
+          <dt>Receiver</dt><dd>Internal charging modules in the aircraft's belly (A5)</dd>
+          <dt>In the clip</dt><dd>27 minutes play as 8 s; the battery gauge and LEDs (A14) follow DJI's level pattern</dd>
+        </dl>
+        <p class="note">Spec sheet; installation manual p. 7 note 1; user manual pp. 9, 23.</p>
+      </section>
+
+      <section>
+        <h3>Layers</h3>
+        <label class="switch" for="lyrPins"><input type="checkbox" id="lyrPins" checked><span>Part callouts <small>Numbering from the manuals</small></span></label>
+        <label class="switch" for="lyrCutaway"><input type="checkbox" id="lyrCutaway" checked><span>See inside while charging <small>Fades the closed cover during charging</small></span></label>
+        <label class="switch" for="lyrBox"><input type="checkbox" id="lyrBox" checked><span>Live envelope box <small>The box measured above</small></span></label>
+        <label class="switch" for="lyrBase"><input type="checkbox" id="lyrBase" checked><span>Concrete base <small>700 × 700 mm; height set in Conditions</small></span></label>
+        <label class="switch" for="lyrFence"><input type="checkbox" id="lyrFence"><span>Clearance fence <small>≥ 0.6 m on every side, ≥ 1.2 m tall</small></span></label>
+        <label class="switch" for="lyrAircraft"><input type="checkbox" id="lyrAircraft" checked><span>Matrice 4D aircraft</span></label>
+      </section>
+
+      <section>
+        <h3>Parts <small>select to locate</small></h3>
+        __PARTS__
+      </section>
+    </div>
+
+    <div class="panel" id="panelConditions" role="tabpanel" aria-labelledby="tabConditions" hidden>
+      <div class="verdict" id="verdict"><div><b id="verdictTitle">Clear to fly</b><span id="verdictSub">Every check passes for these conditions.</span></div></div>
+      <div class="readouts">
+        <div><span class="k">Dew point</span><span class="v" id="rDew">6.0 °C</span></div>
+        <div><span class="k">Air − dew point</span><span class="v" id="rSpread">9.0 °C</span></div>
+        <div><span class="k">Snow vs. feet</span><span class="v" id="rSnow">—</span></div>
+        <div><span class="k">Water vs. feet</span><span class="v" id="rWater">—</span></div>
+      </div>
+      <ul class="checks" id="checks"></ul>
+
+      <p class="group-title">Weather</p>
+      <div>
+        <div class="ctl"><label for="cTemp">Air temperature</label><output id="oTemp" for="cTemp">15 °C</output>
+          <div class="rangebox"><input type="range" id="cTemp" min="-35" max="55" step="1" value="15">
+            <div class="marks"><span style="left:5.56%">−30</span><span class="soft" style="left:16.67%">−20</span><span style="left:94.44%">50</span></div></div></div>
+        <div class="ctl"><label for="cRh">Relative humidity</label><output id="oRh" for="cRh">55 %</output>
+          <div class="rangebox"><input type="range" id="cRh" min="5" max="100" step="1" value="55"><div class="marks"><span style="left:92.63%">93</span></div></div></div>
+        <div class="ctl"><label for="cWind">Wind at the dock</label><output id="oWind" for="cWind">3 m/s</output>
+          <div class="rangebox"><input type="range" id="cWind" min="0" max="20" step="0.5" value="3"><div class="marks"><span style="left:60%">12</span></div></div></div>
+        <div class="ctl"><label for="cPrecip">Precipitation</label><output id="oPrecip" for="cPrecip">none</output>
+          <div class="rangebox"><input type="range" id="cPrecip" min="0" max="10" step="0.5" value="0"><div class="marks"><span style="left:20%">2</span></div></div></div>
+      </div>
+      <p class="group-title">Site</p>
+      <div>
+        <div class="ctl"><label for="cSnow">Snow on the ground</label><output id="oSnow" for="cSnow">0 cm</output>
+          <div class="rangebox"><input type="range" id="cSnow" min="0" max="60" step="1" value="0"></div></div>
+        <div class="ctl"><label for="cCoverSnow">Snow and ice on the cover</label><output id="oCoverSnow" for="cCoverSnow">0 cm</output>
+          <div class="rangebox"><input type="range" id="cCoverSnow" min="0" max="15" step="1" value="0"></div></div>
+        <div class="ctl"><label for="cWater">Flood water</label><output id="oWater" for="cWater">0 cm</output>
+          <div class="rangebox"><input type="range" id="cWater" min="0" max="40" step="1" value="0"></div></div>
+        <div class="ctl"><label for="cBase">Base height under the dock</label><output id="oBase" for="cBase">10 cm</output>
+          <div class="rangebox"><input type="range" id="cBase" min="0" max="80" step="1" value="10"><div class="marks"><span class="soft" style="left:62.5%">50 vent.</span></div></div></div>
+      </div>
+      <p class="group-title">Faults</p>
+      <div>
+        <label class="switch" for="cPower"><input type="checkbox" id="cPower" checked><span>Mains power <small>Off: the dock runs on its 12 Ah backup battery</small></span></label>
+        <label class="switch" for="cEstop"><input type="checkbox" id="cEstop"><span>Emergency stop pressed</span></label>
+        <label class="switch" for="cMetal"><input type="checkbox" id="cMetal"><span>Metal ring left on the landing pad</span></label>
+      </div>
+      <button type="button" class="btn" id="resetCond">Reset conditions</button>
+    </div>
+
+    <div class="panel" id="panelIssues" role="tabpanel" aria-labelledby="tabIssues" hidden>
+      <p class="lede">Common problems, each tied to what DJI's manuals say. Select one to set it up on the model, then fine-tune it in Conditions.</p>
+      <ul class="issues" id="issues"></ul>
+    </div>
+
+    <footer class="sources">
+      <p><b>Sources:</b> DJI Dock 3 spec sheet; Installation and Setup Manual v1.0 (pp. 7–8, 12–13, 20, 22–28, 37); Matrice 4D Series User Manual v1.0 (pp. 9, 12, 23–24, 31, 48–49); Maintenance Manual (p. 18); Safety Guidelines.</p>
+      <p>Published dimensions and limits are used as-is. Shapes between them are estimated from the drawings, and the cooled-cabin temperature for lens fogging is an assumption. Not affiliated with or endorsed by DJI.</p>
+      <p class="sig">Built by Claude Opus 5.5 (claude-opus-5-5) · 2026-09-22</p>
+    </footer>
+  </aside>
+</div>
+
+<script type="importmap">
+{ "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.186.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.186.0/examples/jsm/"
+} }
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
+import { Reflector } from 'three/addons/objects/Reflector.js';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { GTAOPass } from 'three/addons/postprocessing/GTAOPass.js';
+import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+
+const GLB_B64 = "__GLB_B64__";
+const $ = (s) => document.querySelector(s);
+const $$ = (s) => Array.from(document.querySelectorAll(s));
+const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const clamp01 = (x) => Math.max(0, Math.min(1, x));
+const smooth = (x) => { x = clamp01(x); return x * x * (3 - 2 * x); };
+const cssVar = (n) => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const color = (n) => new THREE.Color(cssVar(n));
+
+// ====================================================================== renderer + pipeline
+const stage = $('#stage'), canvas = $('#view');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: false, powerPreference: 'high-performance' });
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.toneMapping = THREE.NeutralToneMapping;
+renderer.toneMappingExposure = 1.0;
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFShadowMap;
+
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(32, 1, 0.02, 200);
+const controls = new OrbitControls(camera, canvas);
+Object.assign(controls, { enableDamping: true, dampingFactor: 0.08, minDistance: 0.4, maxDistance: 14, maxPolarAngle: Math.PI * 0.495 });
+
+// studio environment: soft gradient room + softboxes, for crisp clearcoat reflections
+function studioEnvironment() {
+  const s = new THREE.Scene();
+  const geo = new THREE.SphereGeometry(30, 48, 24);
+  const col = [];
+  const p = geo.attributes.position;
+  for (let i = 0; i < p.count; i++) {
+    const y = p.getY(i) / 30;
+    const v = y > 0 ? 0.16 + 0.34 * Math.pow(y, 0.7) : 0.05 + 0.05 * (1 + y);
+    col.push(v, v * 1.01, v * 1.04);
+  }
+  geo.setAttribute('color', new THREE.Float32BufferAttribute(col, 3));
+  s.add(new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ vertexColors: true, side: THREE.BackSide })));
+  const box = (w, h, pos, intensity, tint = 0xffffff) => {
+    const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ color: new THREE.Color(tint).multiplyScalar(intensity), side: THREE.DoubleSide }));
+    m.position.set(...pos);
+    m.lookAt(0, 0.4, 0);
+    s.add(m);
+  };
+  box(9, 5, [-6, 9, 7], 5.5);                  // key softbox, high front-left
+  box(2, 12, [12, 4, -2], 2.6);                // right strip
+  box(2, 12, [-12, 4, -5], 1.8, 0xdfe8ff);     // cool left strip
+  box(14, 14, [0, 16, 0], 1.2);                // ceiling
+  box(6, 2.5, [4, 2, 13], 1.4, 0xfff0e0);      // warm kicker
+  const pm = new THREE.PMREMGenerator(renderer);
+  const tex = pm.fromScene(s, 0.03).texture;
+  pm.dispose();
+  return tex;
+}
+scene.environment = studioEnvironment();
+scene.environmentIntensity = 1.0;
+
+scene.add(new THREE.HemisphereLight(0xffffff, 0x5c646b, 0.25));
+const sun = new THREE.DirectionalLight(0xfff6ec, 1.55);
+sun.position.set(2.6, 5.4, 3.3);
+sun.castShadow = true;
+sun.shadow.mapSize.set(2048, 2048);
+Object.assign(sun.shadow.camera, { left: -3.2, right: 3.2, top: 3.2, bottom: -3.2, near: 0.5, far: 16 });
+sun.shadow.bias = -0.0002;
+sun.shadow.normalBias = 0.015;
+sun.shadow.radius = 5;
+scene.add(sun);
+
+// backdrop: vertical studio sweep + vignette (theme-driven)
+const backdropCanvas = document.createElement('canvas');
+backdropCanvas.width = 16; backdropCanvas.height = 512;
+const backdrop = new THREE.CanvasTexture(backdropCanvas);
+backdrop.colorSpace = THREE.SRGBColorSpace;
+scene.background = backdrop;
+function paintBackdrop(top, horizon) {
+  const g = backdropCanvas.getContext('2d');
+  const grad = g.createLinearGradient(0, 0, 0, 512);
+  grad.addColorStop(0, top); grad.addColorStop(0.62, horizon); grad.addColorStop(1, horizon);
+  g.fillStyle = grad; g.fillRect(0, 0, 16, 512);
+  backdrop.needsUpdate = true;
+}
+
+// floor: planar mirror under a radial-fading tint, plus a shadow catcher
+const GROUND_Y = -0.1;
+const floorAlpha = (() => {
+  const c = document.createElement('canvas');
+  c.width = c.height = 1024;
+  const g = c.getContext('2d');
+  const grad = g.createRadialGradient(512, 512, 0, 512, 512, 512);
+  grad.addColorStop(0, '#6e6e6e'); grad.addColorStop(0.05, '#8c8c8c'); grad.addColorStop(0.12, '#e8e8e8'); grad.addColorStop(0.2, '#ffffff');
+  g.fillStyle = grad; g.fillRect(0, 0, 1024, 1024);
+  return new THREE.CanvasTexture(c);
+})();
+const floorGroup = new THREE.Group();
+scene.add(floorGroup);
+let reflector = null;
+function makeReflector() {
+  const w = Math.max(256, Math.round(stage.clientWidth * 0.6)), h = Math.max(256, Math.round(stage.clientHeight * 0.6));
+  const r = new Reflector(new THREE.PlaneGeometry(60, 60), { clipBias: 0.003, textureWidth: w, textureHeight: h, color: 0x888888, multisample: 4 });
+  r.rotation.x = -Math.PI / 2;
+  r.userData.noOcclude = true;
+  return r;
+}
+const floorTint = new THREE.Mesh(new THREE.PlaneGeometry(60, 60),
+  new THREE.MeshBasicMaterial({ color: 0xcccccc, transparent: true, alphaMap: floorAlpha, depthWrite: false }));
+floorTint.rotation.x = -Math.PI / 2;
+floorTint.position.y = 0.0006;
+floorTint.renderOrder = 1;
+const shadowCatcher = new THREE.Mesh(new THREE.PlaneGeometry(60, 60), new THREE.ShadowMaterial({ opacity: 0.28, depthWrite: false }));
+shadowCatcher.rotation.x = -Math.PI / 2;
+shadowCatcher.position.y = 0.0012;
+shadowCatcher.receiveShadow = true;
+shadowCatcher.renderOrder = 2;
+floorGroup.add(floorTint, shadowCatcher);
+floorGroup.position.y = GROUND_Y;
+
+// weather props (viewer only)
+const snowMat = new THREE.MeshPhysicalMaterial({ color: 0xf1f5fa, roughness: 0.8, sheen: 0.4, sheenColor: 0xffffff });
+const snowGround = new THREE.Mesh(new THREE.BoxGeometry(60, 1, 60), snowMat);
+snowGround.receiveShadow = true;
+snowGround.visible = false;
+scene.add(snowGround);
+
+// post-processing
+const target = new THREE.WebGLRenderTarget(1, 1, { type: THREE.HalfFloatType, samples: 4 });
+const composer = new EffectComposer(renderer, target);
+composer.addPass(new RenderPass(scene, camera));
+const gtao = new GTAOPass(scene, camera, 1, 1);
+try { gtao.updateGtaoMaterial({ radius: 0.22, distanceExponent: 1.4, thickness: 1.2, scale: 1.1, samples: 16 }); gtao.blendIntensity = 0.85; } catch {}
+composer.addPass(gtao);
+const bloom = new UnrealBloomPass(new THREE.Vector2(1, 1), 0.55, 0.45, 1.6);
+composer.addPass(bloom);
+composer.addPass(new OutputPass());
+
+let quality = (navigator.hardwareConcurrency || 4) >= 8 && !matchMedia('(pointer: coarse)').matches ? 'high' : 'fast';
+try { const q = localStorage.getItem('dock3-q55'); if (q === 'high' || q === 'fast') quality = q; } catch {}
+
+function resize() {
+  const w = stage.clientWidth, h = stage.clientHeight;
+  const pr = quality === 'high' ? Math.min(window.devicePixelRatio || 1, 2) : 1;
+  renderer.setPixelRatio(pr);
+  renderer.setSize(w, h, false);
+  composer.setPixelRatio(pr);
+  composer.setSize(w, h);
+  camera.aspect = w / Math.max(h, 1);
+  camera.updateProjectionMatrix();
+  if (reflector) reflector.getRenderTarget().setSize(Math.round(w * pr * 0.6), Math.round(h * pr * 0.6));
+}
+new ResizeObserver(resize).observe(stage);
+
+function setQuality(q) {
+  quality = q;
+  try { localStorage.setItem('dock3-q55', q); } catch {}
+  $$('[data-quality]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.quality === q)));
+  gtao.enabled = q === 'high';
+  if (q === 'high' && !reflector) { reflector = makeReflector(); floorGroup.add(reflector); }
+  if (reflector) reflector.visible = q === 'high';
+  applyFloor();
+  resize();
+}
+$$('[data-quality]').forEach((b) => b.addEventListener('click', () => setQuality(b.dataset.quality)));
+
+// ====================================================================== state
+let root, dock, aircraft, site, mixer, duration = 32.5, TL = null;
+let t = 0, playing = !reduced, speed = 1, follow = false, flight = null, held = null;
+let envBox = null, fence = null, selected = null;
+const pins = [], envMeshes = [], nodes = {};
+const box = new THREE.Box3();
+const v3 = new THREE.Vector3(), v3b = new THREE.Vector3(), vtmp = new THREE.Vector3();
+const SPEC = { closed: [640, 745, 770], open: [1760, 745, 485] };
+const FALLBACK = { fps: 30, frames: { open0: 30, open1: 120, spin0: 120, spin1: 150, up0: 150, up1: 225, loop0: 225, loop1: 495, down0: 495, down1: 585,
+  stop0: 585, stop1: 615, close0: 615, close1: 705, charge0: 705, charge1: 945, end: 975 }, battery: { full: 95, low: 15, charge_minutes: 27, charge_curve: 1.6, output_v: 35 } };
+const fr = (k) => (TL || FALLBACK).frames[k] / (TL || FALLBACK).fps;
+const inRange = (a, b) => t >= fr(a) && t < fr(b);
+const VIEWS = {
+  three: { p: [2.0, 1.28, 2.25], t: [0.02, 0.33, 0.02] },
+  front: { p: [0, 0.48, 3.4], t: [0, 0.34, 0] },
+  top: { p: [0, 4.0, 0.0001], t: [0, 0.2, 0] },
+  pad: { p: [0.82, 1.32, 1.22], t: [0, 0.4, 0] },
+};
+const COND0 = { temp: 15, rh: 55, wind: 3, precip: 0, snow: 0, coverSnow: 0, water: 0, base: 10, power: true, estop: false, metal: false };
+let cond = { ...COND0 };
+const CABIN_ASSUMED = 25;
+let E = { checks: [], Td: 0, Tf: 0, spread: 0, fog: false, dew: false, frost: false, lensRisk: false };
+
+// ====================================================================== load
+const parseJSON = (s) => { try { return typeof s === 'string' ? JSON.parse(s) : s || null; } catch { return null; } };
+const order = (id) => (/^A/.test(id) ? 100 + parseInt(id.slice(1), 10) : parseInt(id, 10));
+function b64(b) { const bin = atob(b); const u = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i); return u.buffer; }
+
+async function load() {
+  const buf = GLB_B64.length > 64 ? b64(GLB_B64) : await (await fetch('dock3.glb')).arrayBuffer();
+  const gltf = await new GLTFLoader().parseAsync(buf, '');
+  root = gltf.scene;
+  scene.add(root);
+  root.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
+  dock = root.getObjectByName('Dock3');
+  aircraft = root.getObjectByName('M4D');
+  site = root.getObjectByName('Site_ConcreteBase');
+  dock.traverse((o) => { if (o.isMesh) envMeshes.push(o); });
+  for (const n of ['Lid_L', 'Lid_R', 'Lid_R_WindRotor', 'Dock_ChargeCoil', 'Lid_L_StatusIndicators', 'Lid_R_StatusIndicators']) nodes[n] = root.getObjectByName(n);
+  nodes.field = [1, 2, 3].map((k) => root.getObjectByName(`Dock_ChargeField_${k}`));
+  nodes.leds = [1, 2, 3, 4].map((k) => root.getObjectByName(`M4D_BatteryLED_${k}`));
+  TL = parseJSON(root.userData.dock3_timeline) || FALLBACK;
+  if (!TL.battery) TL.battery = FALLBACK.battery;
+  const spec = parseJSON(root.userData.dock3_spec);
+  if (spec) { SPEC.closed = spec.closed_mm; SPEC.open = spec.open_mm; }
+
+  mixer = new THREE.AnimationMixer(root);
+  const clip = gltf.animations[0];
+  duration = clip.duration;
+  mixer.clipAction(clip).play();
+  $('#scrub').max = duration.toFixed(2);
+  $('#total').textContent = `${duration.toFixed(1)} s`;
+  buildTimeline();
+  fitBlockLabels();
+  document.fonts?.ready.then(fitBlockLabels);
+  root.traverse((o) => { if (o.userData && o.userData.hotspot) addPin(o); });
+  pins.sort((a, b) => order(a.id) - order(b.id));
+  $$('.parts button[data-id]').forEach((b) => b.addEventListener('click', () => select(b.dataset.id, true)));
+
+  prepareMaterials();
+  buildExtras();
+  envBox = new THREE.Box3Helper(box, color('--accent-fill'));
+  envBox.userData.noOcclude = true;
+  scene.add(envBox);
+  fence = buildFence();
+  fence.visible = $('#lyrFence').checked;
+  scene.add(fence);
+  applyTheme();
+  setQuality(quality);
+  setView('three', true);
+  if (reduced) t = fr('up0');
+  conditionsChanged();
+  setTime(t);
+  $('#loading').hidden = true;
+  const deep = location.hash.match(/issue=([\w-]+)/);
+  const it = deep && ISSUES.find((i) => i.id === deep[1]);
+  if (it) { showTab('Issues'); applyIssue(it); if (/paused/.test(location.hash)) setPlaying(false); }
+  renderer.setAnimationLoop(tick);
+}
+
+const cover = { meshes: [], base: new Map() };
+let statusMat, lensMat, lensBase;
+function prepareMaterials() {
+  const clones = new Map();
+  for (const lid of [nodes.Lid_L, nodes.Lid_R]) {
+    lid.traverse((o) => {
+      if (!o.isMesh || /StatusIndicators/.test(o.name)) return;
+      if (!clones.has(o.material)) {
+        const c = o.material.clone();
+        clones.set(o.material, c);
+        cover.base.set(c, { color: c.color.clone(), roughness: c.roughness, clearcoatRoughness: c.clearcoatRoughness ?? 0 });
+      }
+      o.material = clones.get(o.material);
+      cover.meshes.push(o);
+    });
+  }
+  statusMat = nodes.Lid_R_StatusIndicators.material.clone();
+  nodes.Lid_R_StatusIndicators.material = nodes.Lid_L_StatusIndicators.material = statusMat;
+  // every glass surface on the aircraft (DJI's gimbal lenses and sensor windows) shares one clone for lens fogging
+  const glass = [];
+  aircraft.traverse((o) => { if (o.isMesh && o.material && o.material.name === 'Glass') glass.push(o); });
+  lensMat = (glass[0] ? glass[0].material : new THREE.MeshStandardMaterial({ color: 0x050608 })).clone();
+  glass.forEach((o) => { o.material = lensMat; });
+  lensBase = { color: lensMat.color.clone(), roughness: lensMat.roughness };
+}
+
+// ====================================================================== extras
+const extras = { caps: [], drops: [], ring: null, ringMat: null, glow: null };
+let snowPts, rainLines;
+const PMAX = 6000, pPos = new Float32Array(PMAX * 3), rPos = new Float32Array(PMAX * 6);
+function buildExtras() {
+  const dropGeo = new THREE.SphereGeometry(0.0042, 10, 6);
+  const dropMat = new THREE.MeshPhysicalMaterial({ color: 0xe8f4fa, roughness: 0.02, metalness: 0, transmission: 0, transparent: true, opacity: 0.72, clearcoat: 1 });
+  const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), s = new THREE.Vector3();
+  for (const [lid, side] of [[nodes.Lid_R, 1], [nodes.Lid_L, -1]]) {
+    const inst = new THREE.InstancedMesh(dropGeo, dropMat, 180);
+    for (let i = 0; i < 180; i++) {
+      const r = 0.55 + Math.random() * 0.9;
+      m4.compose(vtmp.set(-side * (0.05 + Math.random() * 0.25), 0.5262, (Math.random() - 0.5) * 0.5), q, s.set(r, r * 0.45, r));
+      inst.setMatrixAt(i, m4);
+    }
+    inst.userData.noOcclude = true;
+    inst.visible = false;
+    lid.add(inst);
+    extras.drops.push(inst);
+  }
+  extras.ringMat = new THREE.MeshStandardMaterial({ color: 0x9aa1a8, metalness: 1, roughness: 0.28, emissive: 0xff4a10, emissiveIntensity: 0 });
+  extras.ring = new THREE.Mesh(new THREE.TorusGeometry(0.012, 0.0028, 12, 36), extras.ringMat);
+  extras.ring.rotation.x = Math.PI / 2;
+  extras.ring.position.set(0.088, 0.3928, 0.012);
+  extras.ring.userData.noOcclude = true;
+  extras.ring.visible = false;
+  dock.add(extras.ring);
+  extras.glow = new THREE.PointLight(0x6fe6ff, 0, 0.7, 2);
+  extras.glow.position.set(-0.01, 0.405, 0);
+  dock.add(extras.glow);
+
+  const disc = document.createElement('canvas');
+  disc.width = disc.height = 32;
+  const g = disc.getContext('2d');
+  const grad = g.createRadialGradient(16, 16, 0, 16, 16, 16);
+  grad.addColorStop(0, 'rgba(255,255,255,1)'); grad.addColorStop(0.5, 'rgba(255,255,255,.8)'); grad.addColorStop(1, 'rgba(255,255,255,0)');
+  g.fillStyle = grad; g.fillRect(0, 0, 32, 32);
+  const pGeo = new THREE.BufferGeometry();
+  pGeo.setAttribute('position', new THREE.BufferAttribute(pPos, 3));
+  snowPts = new THREE.Points(pGeo, new THREE.PointsMaterial({ size: 0.024, map: new THREE.CanvasTexture(disc), transparent: true, depthWrite: false }));
+  const rGeo = new THREE.BufferGeometry();
+  rGeo.setAttribute('position', new THREE.BufferAttribute(rPos, 3));
+  rainLines = new THREE.LineSegments(rGeo, new THREE.LineBasicMaterial({ color: 0x9fb4c8, transparent: true, opacity: 0.55 }));
+  for (const o of [snowPts, rainLines]) { o.frustumCulled = false; o.userData.noOcclude = true; scene.add(o); }
+  for (let i = 0; i < PMAX; i++) respawn(i, true);
+}
+function buildSnowCaps() {
+  for (const c of extras.caps) { c.parent.remove(c); c.geometry.dispose(); }
+  extras.caps.length = 0;
+  const th = cond.coverSnow / 100;
+  if (th <= 0) return;
+  for (const [lid, side] of [[nodes.Lid_R, 1], [nodes.Lid_L, -1]]) {
+    const cap = new THREE.Mesh(new RoundedBoxGeometry(0.29, th, 0.556, 3, Math.min(th / 2, 0.024)), snowMat);
+    cap.position.set(-side * 0.164, 0.525 + th / 2 - 0.003, 0);
+    cap.castShadow = cap.receiveShadow = true;
+    cap.userData.noOcclude = true;
+    lid.add(cap);
+    extras.caps.push(cap);
+  }
+}
+const particleFloor = () => GROUND_Y + cond.snow / 100;
+function respawn(i, any) {
+  pPos[i * 3] = (Math.random() - 0.5) * 7;
+  pPos[i * 3 + 1] = any ? particleFloor() + Math.random() * 4.6 : 4.6;
+  pPos[i * 3 + 2] = (Math.random() - 0.5) * 7;
+}
+
+// ====================================================================== timeline
+let phases = [];
+function buildTimeline() {
+  phases = [
+    { a: 0, b: fr('open0'), name: 'Closed · standby', short: 'Standby', kind: 'idle' },
+    { a: fr('open0'), b: fr('open1'), name: 'Cover opening', short: 'Open', kind: 'dock' },
+    { a: fr('spin0'), b: fr('up1'), name: 'Spin-up and take-off', short: 'Take-off', kind: 'flight' },
+    { a: fr('loop0'), b: fr('loop1'), name: 'Orbit around the dock', short: 'Orbit flight', kind: 'flight' },
+    { a: fr('down0'), b: fr('stop1'), name: 'Landing, propellers fold', short: 'Land', kind: 'flight' },
+    { a: fr('close0'), b: fr('close1'), name: 'Cover closing', short: 'Close', kind: 'dock' },
+    { a: fr('charge0'), b: fr('charge1'), name: 'Induction charging', short: 'Induction charging', kind: 'charge' },
+    { a: fr('charge1'), b: duration, name: 'Closed · ready', short: 'Ready', kind: 'idle' },
+  ];
+  const el = $('#blocks');
+  el.textContent = '';
+  for (const p of phases) {
+    const s = document.createElement('span');
+    s.className = p.kind;
+    s.style.flex = `${p.b - p.a} 1 0`;
+    s.textContent = p.short;
+    s.title = p.name;
+    el.appendChild(s);
+    p.el = s;
+  }
+}
+function fitBlockLabels() { phases.forEach((p) => p.el && p.el.classList.toggle('tight', p.el.scrollWidth > p.el.clientWidth + 1)); }
+new ResizeObserver(() => fitBlockLabels()).observe($('#blocks'));
+function currentPhase() { return phases.find((q) => t >= q.a && t < q.b) || phases[phases.length - 1]; }
+let lastPhase = null;
+function setTime(x) {
+  t = ((x % duration) + duration) % duration;
+  if (mixer) mixer.setTime(t);
+  $('#scrub').value = t.toFixed(2);
+  $('#clock').textContent = t.toFixed(1);
+  $('#playhead').style.left = `${(t / duration) * 100}%`;
+  const p = currentPhase();
+  if (p && p !== lastPhase) {
+    $('#phase').textContent = p.name;
+    phases.forEach((q) => q.el && q.el.classList.toggle('now', q === p));
+    lastPhase = p;
+  }
+  measureSoon = true;
+}
+function setPlaying(on) {
+  playing = on;
+  $('#icoPause').hidden = !on;
+  $('#icoPlay').hidden = on;
+  $('#play').setAttribute('aria-label', on ? 'Pause mission' : 'Play mission');
+}
+$('#play').addEventListener('click', () => setPlaying(!playing));
+$('#scrub').addEventListener('input', (e) => { setPlaying(false); setTime(parseFloat(e.target.value)); });
+$('#speed').addEventListener('click', () => { speed = speed === 1 ? 2 : speed === 2 ? 0.5 : 1; $('#speed').textContent = (speed === 0.5 ? '½' : speed) + '×'; });
+canvas.addEventListener('keydown', (e) => { if (e.code === 'Space') { e.preventDefault(); setPlaying(!playing); } });
+setPlaying(playing);
+
+// battery: same model as the Blender bake (spec: 15 -> 95 % in 27 min; user manual p.23 LED bands)
+function batteryAt(time) {
+  const b = TL.battery, F = TL.frames, f = time * TL.fps;
+  if (f < F.up0) return b.full;
+  if (f < F.down1) return b.full - (b.full - b.low) * (f - F.up0) / (F.down1 - F.up0);
+  if (f < F.charge0 || !cond.power) return b.low;
+  if (f < F.charge1) { const u = (f - F.charge0) / (F.charge1 - F.charge0); return b.low + (b.full - b.low) * (1 - Math.pow(1 - u, b.charge_curve)); }
+  return b.full;
+}
+const BANDS = [[92, 4, -1], [76, 3, 3], [63, 3, -1], [51, 2, 2], [38, 2, -1], [26, 1, 1], [13, 1, -1], [0, 0, 0]];
+function ledPattern(level, time) {
+  const [, n, flash] = BANDS.find(([lo]) => level >= lo);
+  const blink = Math.floor(time * TL.fps / 15) % 2 === 0;
+  return [0, 1, 2, 3].map((i) => (i < n ? 'on' : i === flash ? (blink ? 'on' : 'flash') : ''));
+}
+
+// ====================================================================== envelope
+let measureSoon = true, lastMeasure = 0;
+function measure() {
+  root.updateMatrixWorld(true);
+  box.makeEmpty();
+  for (const m of envMeshes) {
+    const pos = m.geometry.attributes.position;
+    for (let i = 0; i < pos.count; i++) box.expandByPoint(vtmp.fromBufferAttribute(pos, i).applyMatrix4(m.matrixWorld));
+  }
+  const s = box.getSize(v3), dims = [s.x * 1000, s.z * 1000, s.y * 1000];
+  ['#mL', '#mW', '#mH'].forEach((id, i) => { $(id).textContent = Math.round(dims[i]); });
+  const dev = (ref) => Math.max(...ref.map((r, i) => Math.abs(dims[i] - r)));
+  const dc = dev(SPEC.closed), dopen = dev(SPEC.open);
+  $('#rowClosed').classList.toggle('hit', dc <= 1.5);
+  $('#rowOpen').classList.toggle('hit', dopen <= 1.5);
+  const st = $('#status');
+  if (dc <= 1.5) { st.className = 'status ok'; st.textContent = `Matches closed spec, ${dc < 0.5 ? 'to the millimetre' : `within ${dc.toFixed(1)} mm`}`; }
+  else if (dopen <= 1.5) { st.className = 'status ok'; st.textContent = `Matches open spec, ${dopen < 0.5 ? 'to the millimetre' : `within ${dopen.toFixed(1)} mm`}`; }
+  else { st.className = 'status move'; st.textContent = 'Cover in motion'; }
+}
+
+function buildFence() {
+  const g = new THREE.Group(), half = 0.95, h = 1.2, pts = [];
+  const c = [[-half, -half], [half, -half], [half, half], [-half, half]];
+  for (let i = 0; i < 4; i++) {
+    const [x0, z0] = c[i], [x1, z1] = c[(i + 1) % 4];
+    pts.push(x0, 0, z0, x1, 0, z1, x0, h, z0, x1, h, z1, x0, 0, z0, x0, h, z0);
+  }
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.Float32BufferAttribute(pts, 3));
+  const lines = new THREE.LineSegments(geo, new THREE.LineDashedMaterial({ color: color('--ink-2'), dashSize: 0.06, gapSize: 0.04 }));
+  lines.computeLineDistances();
+  g.add(lines);
+  const panel = new THREE.MeshBasicMaterial({ color: 0x8aa0b0, transparent: true, opacity: 0.06, side: THREE.DoubleSide, depthWrite: false });
+  for (let i = 0; i < 4; i++) {
+    const m = new THREE.Mesh(new THREE.PlaneGeometry(2 * half, h), panel);
+    m.position.set(0, h / 2, 0); m.rotation.y = i * Math.PI / 2; m.translateZ(half);
+    g.add(m);
+  }
+  g.position.y = GROUND_Y;
+  g.traverse((o) => { o.userData.noOcclude = true; });
+  return g;
+}
+
+// ====================================================================== conditions
+function dewPoint(T, RH) { const a = 17.625, b = 243.04, g = Math.log(RH / 100) + a * T / (b + T); return b * g / (a - g); }
+function frostPoint(T, RH) { const a = 22.587, b = 273.86, g = Math.log(RH / 100) + 17.625 * T / (243.04 + T); return b * g / (a - g); }
+function nextCoverMove(time) {
+  if (time <= fr('open0')) return fr('open0');
+  if (time < fr('open1')) return time;
+  if (time <= fr('close0')) return fr('close0');
+  if (time < fr('close1')) return time;
+  return null;
+}
+function evaluate() {
+  const c = cond, T = c.temp, Td = dewPoint(T, c.rh), spread = T - Td, Tf = frostPoint(T, c.rh);
+  const checks = [];
+  const add = (level, title, detail, src, holdAt) => checks.push({ level, title, detail, src, holdAt });
+  const atOpen = () => fr('open0');
+  if (T < -30 || T > 50) add('hold', `${T} °C is outside the dock's −30 to 50 °C range`, 'The dock stops working and resumes once the temperature is back in range.', 'Installation manual p. 12', atOpen);
+  else if (T < -20) add('caution', 'Below −20 °C: the dock pre-warms the aircraft', 'It warms the aircraft so it can take off, but aircraft performance is reduced.', 'Installation manual p. 13');
+  if (T >= -30 && T <= 50 && T < 5) add('info', 'Battery self-heating before take-off', 'The aircraft cannot take off while its battery is too cold; the flight task starts once it has warmed. After charging, the dock keeps an idle battery above 10 °C.', 'User manual pp. 23–24');
+  if (T <= 0) add('caution', 'Check for snow, ice and frozen propellers', 'In low temperatures, check the dock camera livestream for snow and ice on the cover or aircraft, and for frozen propellers.', 'User manual p. 49');
+  if (c.rh > 93) add('caution', `${c.rh} % humidity is above the 93 % rating`, 'The dock is rated to work at 93 % relative humidity (IP56).', 'Installation manual p. 13');
+  const fog = spread <= 1 && c.rh >= 97, dew = !fog && T > 0 && spread <= 2.5, frost = T <= 0 && T - Tf <= 2.5;
+  if (fog) add('hold', 'Fog: do not fly', 'At its dew point the air forms fog. DJI says not to operate in fog; the vision system is unavailable in low visibility.', 'User manual p. 48', atOpen);
+  else if (dew) add('caution', 'Dew forming on the cover and lenses', `The air is only ${spread.toFixed(1)} °C above its dew point, so surfaces cooler than ${Td.toFixed(1)} °C collect condensation. The cameras support lens defogging.`, 'Installation manual p. 13 · Spec sheet');
+  if (frost) add('caution', 'Frost forming on the cover', `The frost point is ${Tf.toFixed(1)} °C, within 2.5 °C of the air, so ice builds up on exposed surfaces.`, 'User manual p. 49');
+  const lensRisk = T > CABIN_ASSUMED && Td > CABIN_ASSUMED;
+  if (lensRisk) add('caution', 'Lenses may fog after take-off', `The outside dew point (${Td.toFixed(1)} °C) is above a cabin cooled to about ${CABIN_ASSUMED} °C, so the cool camera fogs in the humid air. The cameras support lens defogging.`, 'Spec sheet · cabin temperature assumed');
+  if (c.wind > 12) add('hold', `Wind ${c.wind} m/s is above 12 m/s`, 'The aircraft cannot take off or land in the dock above 12 m/s; in flight it diverts to the alternate landing site.', 'User manual pp. 31, 48 · Spec sheet',
+    (time) => (time <= fr('open0') ? fr('open0') : time < fr('down0') ? fr('down0') : null));
+  else if (c.wind >= 10) add('caution', 'Wind close to the 12 m/s limit', 'Fly with caution when the measured wind is close to the limit; wind at altitude can be stronger than at the dock.', 'User manual p. 31');
+  if (c.precip > 0 && T <= 0) add('hold', 'Snowfall: do not fly', 'DJI says not to operate the aircraft in snow.', 'User manual p. 48', atOpen);
+  else if (c.precip > 2) add('hold', `Rain ${c.precip} mm/h is above 2 mm/h`, 'Do not fly when rainfall exceeds 2 mm per hour; the aircraft is rated IP55.', 'User manual p. 24', atOpen);
+  else if (c.precip > 0) add('info', `Light rain, ${c.precip} mm/h`, 'Within the 2 mm/h limit; the rainfall gauge reports it to FlightHub 2.', 'User manual pp. 24, 31');
+  const S = (c.snow - c.base) / 100;
+  if (S > 0.10) add('hold', 'Snow blocks the cover', `Snow stands ${Math.round(S * 100)} cm above the bracket feet, higher than the cover skirt (10 cm), so the halves cannot swing open. Raise the base above the expected snow depth.`, 'Installation manual p. 20', () => fr('open0') + 0.35);
+  else if (S > 0.058) add('caution', 'Snow against the dock body', 'Snow buries the brackets and reaches the body, blocking the drain pipe hole underneath.', 'Installation manual p. 20');
+  else if (c.snow > 0 && S > -0.02) add('info', 'Snow up to the brackets', 'In snowy sites, raise the dock on a support base no larger than the dock’s own base.', 'Installation manual p. 20');
+  if (c.coverSnow > 0) {
+    if (!c.power && T < 0) add('hold', 'Cover may be frozen shut', 'On backup battery there is no cover heating, so snow and ice can hold the cover closed.', 'Spec sheet (backup battery)', atOpen);
+    else add('info', 'Snow on the cover', 'Cover heating clears snow and ice; confirm on the dock camera before a flight.', 'Spec sheet · User manual p. 49');
+  }
+  const W = (c.water - c.base) / 100;
+  if (W > 0.058) add('hold', 'Water immersion warning', 'Water has reached the lower compartment. Have a qualified electrician disconnect the power and remove the water.', 'User manual p. 31 · Maintenance manual p. 18', atOpen);
+  else if (c.water > 0 && c.base - c.water < 10) add('caution', 'Flood water close to the base', 'The base should sit more than 100 mm above the highest recorded water level.', 'Installation manual p. 24');
+  if (!c.power) add('caution', 'Running on backup battery', 'The backup battery lasts more than 4 hours, but charging, air conditioning, cover heating and wind gauge heating stop.', 'Spec sheet');
+  if (c.estop) add('hold', 'Emergency stop pressed', 'The cover will not open or close, and the status lights blink red and yellow alternately.', 'Installation manual pp. 7–8', nextCoverMove);
+  if (c.metal) add('caution', 'Metal object on the landing pad', 'The built-in charging module heats metal on the pad, which can damage the pad and cause burns.', 'Installation manual p. 7 · Safety guidelines');
+  const rank = { hold: 0, caution: 1, info: 2 };
+  checks.sort((a, b) => rank[a.level] - rank[b.level]);
+  return { checks, Td, Tf, spread, fog, dew, frost, lensRisk };
+}
+
+function renderChecks() {
+  const holds = E.checks.filter((c) => c.level === 'hold'), cautions = E.checks.filter((c) => c.level === 'caution');
+  $('#verdict').className = 'verdict' + (holds.length ? ' hold' : cautions.length ? ' caution' : '');
+  $('#verdictTitle').textContent = holds.length ? 'Mission held' : cautions.length ? 'Fly with caution' : 'Clear to fly';
+  $('#verdictSub').textContent = (holds.length ? holds : cautions).map((h) => h.title).join(' · ') || 'Every check passes for these conditions.';
+  const list = $('#checks');
+  list.textContent = '';
+  for (const c of E.checks) {
+    const li = document.createElement('li');
+    li.className = 'check';
+    li.innerHTML = `<span class="sev ${c.level}">${c.level}</span><div><b></b><p></p><span class="src"></span></div>`;
+    li.querySelector('b').textContent = c.title;
+    li.querySelector('p').textContent = c.detail;
+    li.querySelector('.src').textContent = c.src;
+    list.appendChild(li);
+  }
+  const n = holds.length || cautions.length, count = $('#condCount');
+  count.hidden = !n;
+  count.textContent = n;
+  count.className = 'count' + (holds.length ? '' : ' caution');
+  $('#rDew').innerHTML = `${E.Td.toFixed(1)} °C` + (cond.temp <= 0 ? ` <small>frost ${E.Tf.toFixed(1)}</small>` : '');
+  $('#rSpread').textContent = `${E.spread.toFixed(1)} °C`;
+  const rel = (d) => (d ? `${d >= cond.base ? '+' : '−'}${Math.abs(d - cond.base)} cm` : '—');
+  $('#rSnow').textContent = rel(cond.snow);
+  $('#rWater').textContent = rel(cond.water);
+  renderAlerts();
+}
+function renderAlerts() {
+  const el = $('#alerts');
+  el.textContent = '';
+  const list = E.checks.filter((c) => c.level !== 'info');
+  for (const c of list.slice(0, 3)) {
+    const a = document.createElement('div');
+    a.className = `alert glass ${c.level}`;
+    a.innerHTML = '<b></b><span></span>';
+    a.querySelector('b').textContent = held === c ? 'Held' : c.level;
+    a.querySelector('span').textContent = c.title;
+    el.appendChild(a);
+  }
+  if (list.length > 3) {
+    const a = document.createElement('div');
+    a.className = 'alert glass more';
+    a.textContent = `+${list.length - 3} more in Conditions`;
+    el.appendChild(a);
+  }
+}
+
+const CTL = [['cTemp', 'temp', (v) => `${v} °C`], ['cRh', 'rh', (v) => `${v} %`], ['cWind', 'wind', (v) => `${v} m/s`],
+  ['cPrecip', 'precip', (v) => (v > 0 ? `${v} mm/h ${cond.temp <= 0 ? 'snow' : 'rain'}` : 'none')], ['cSnow', 'snow', (v) => `${v} cm`],
+  ['cCoverSnow', 'coverSnow', (v) => `${v} cm`], ['cWater', 'water', (v) => `${v} cm`], ['cBase', 'base', (v) => `${v} cm`]];
+const TOGGLES = [['cPower', 'power'], ['cEstop', 'estop'], ['cMetal', 'metal']];
+for (const [id, key] of CTL) $('#' + id).addEventListener('input', (e) => { cond[key] = parseFloat(e.target.value); markIssue(null); conditionsChanged(); });
+for (const [id, key] of TOGGLES) $('#' + id).addEventListener('change', (e) => { cond[key] = e.target.checked; markIssue(null); conditionsChanged(); });
+$('#resetCond').addEventListener('click', () => { cond = { ...COND0 }; markIssue(null); conditionsChanged(); });
+function syncControls() {
+  for (const [id, key, fmt] of CTL) { $('#' + id).value = cond[key]; $('#' + id.replace(/^c/, 'o')).textContent = fmt(cond[key]); }
+  for (const [id, key] of TOGGLES) $('#' + id).checked = cond[key];
+}
+
+let lastCoverSnow = -1;
+function conditionsChanged() {
+  syncControls();
+  E = evaluate();
+  if (!root) { renderChecks(); return; }
+  if (cond.coverSnow !== lastCoverSnow) { buildSnowCaps(); lastCoverSnow = cond.coverSnow; }
+  root.position.y = cond.base / 100 - 0.1;
+  site.scale.y = Math.max(0.001, cond.base / 100 / 0.1);
+  site.visible = $('#lyrBase').checked && cond.base > 0;
+  snowGround.visible = cond.snow > 0;
+  snowGround.position.y = GROUND_Y + cond.snow / 100 - 0.5;
+  extras.ring.visible = cond.metal;
+  for (const [mat, b] of cover.base) {
+    mat.color.copy(b.color);
+    mat.roughness = b.roughness;
+    if ('clearcoatRoughness' in mat) mat.clearcoatRoughness = b.clearcoatRoughness;
+    if (E.frost || cond.coverSnow > 0) { mat.color.lerp(new THREE.Color(0.86, 0.93, 1.0), 0.55); mat.roughness = 0.95; if ('clearcoatRoughness' in mat) mat.clearcoatRoughness = 0.8; }
+    else if (E.dew) { mat.roughness = 0.1; if ('clearcoatRoughness' in mat) mat.clearcoatRoughness = 0.02; }
+  }
+  if (mixer) mixer.setTime(t);
+  applyFloor();
+  applyAmbience();
+  renderChecks();
+}
+
+// floor: dry mirror or reflective flood water
+function applyFloor() {
+  const water = cond.water > 0;
+  floorGroup.position.y = GROUND_Y + (water ? cond.water / 100 : 0);
+  floorGroup.visible = !(cond.snow > 0 && cond.snow >= cond.water);
+  const m = floorTint.material;
+  const hasMirror = reflector && reflector.visible;
+  if (water) { m.color.set(0x24506a); m.alphaMap = null; m.opacity = hasMirror ? 0.58 : 0.8; }
+  else { m.color.copy(color('--floor')); m.alphaMap = hasMirror ? floorAlpha : null; m.opacity = 1; }
+  m.needsUpdate = true;
+  if (reflector) reflector.material.uniforms.color.value.copy(color('--floor-tint'));
+}
+
+function applyAmbience() {
+  const top = color('--stage-top'), horizon = color('--stage-horizon');
+  const T = cond.temp, cold = clamp01((5 - T) / 35) * 0.55, hot = clamp01((T - 28) / 22) * 0.55;
+  for (const c of [top, horizon]) {
+    if (cold) c.lerp(color('--stage-cold'), cold);
+    if (hot) c.lerp(color('--stage-hot'), hot);
+    if (E.fog) c.lerp(new THREE.Color(0.74, 0.77, 0.8), 0.45);
+  }
+  paintBackdrop(`#${top.getHexString()}`, `#${horizon.getHexString()}`);
+  const haze = E.fog ? 0.12 + 0.2 * clamp01((cond.rh - 96) / 4) : cond.precip > 0 ? 0.02 + cond.precip * 0.006 : 0;
+  scene.fog = haze > 0 ? new THREE.FogExp2(horizon, haze) : null;
+  sun.color.set(cold > 0.2 ? 0xe2ebff : hot > 0.2 ? 0xfff0d8 : 0xfff6ec);
+  sun.intensity = E.fog ? 0.9 : cond.precip > 0 ? 1.1 : 1.55;
+}
+
+function applyTheme() {
+  if (envBox) envBox.material.color.copy(color('--accent-fill'));
+  if (fence) fence.traverse((o) => { if (o.isLine) o.material.color.copy(color('--ink-2')); });
+  applyFloor();
+  applyAmbience();
+}
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change', applyTheme);
+new MutationObserver(applyTheme).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+
+// ====================================================================== issues
+const ISSUES = [
+  { id: 'snow-burial', level: 'hold', title: 'Snow buries a low-mounted dock', text: 'On the 10 cm concrete base, 28 cm of snow rises above the cover skirt and the halves cannot swing open. DJI asks for a support base that keeps the dock above the snow; drag “Base height” in Conditions to clear it.', src: 'Installation manual p. 20', cond: { temp: -8, rh: 82, snow: 28, coverSnow: 5 }, t: () => 0.4, view: 'three' },
+  { id: 'cover-ice', level: 'hold', title: 'Frozen cover during a power cut', text: 'Cover heating clears snow and ice, but it stops on backup battery, so the cover can stay frozen shut. In cold weather, check the dock camera for snow, ice and frozen propellers before flying.', src: 'Spec sheet · User manual p. 49', cond: { temp: -12, rh: 85, coverSnow: 8, power: false }, t: () => 0.4, view: 'three', pin: '5' },
+  { id: 'deep-cold', level: 'caution', title: 'Deep cold: warming the aircraft', text: 'Below −20 °C the dock warms the aircraft so it can take off, with reduced performance. The battery self-heats before a flight task starts; after charging the dock keeps an idle battery above 10 °C.', src: 'Installation manual p. 13 · User manual pp. 23–24', cond: { temp: -25, rh: 70 }, t: () => fr('spin0') - 0.2, view: 'pad', pin: 'A12' },
+  { id: 'out-of-range', level: 'hold', title: 'Outside the operating temperature range', text: 'The dock is rated for −30 to 50 °C. Beyond that it stops working, and it resumes once the temperature is back in range.', src: 'Installation manual p. 12', cond: { temp: 53, rh: 20 }, t: () => 0.4, view: 'three' },
+  { id: 'dew', level: 'caution', title: 'Dew point: condensation on the cover', text: 'At 9 °C and 96 % humidity the air is within about 0.6 °C of its dew point, so the cover and lenses collect condensation. The dock is rated to 93 % RH; the cameras have lens defogging.', src: 'Installation manual p. 13 · Spec sheet', cond: { temp: 9, rh: 96 }, t: () => 0.4, view: 'three' },
+  { id: 'fog', level: 'hold', title: 'Fog grounds the flight', text: 'When the air cools to its dew point, fog forms. DJI says not to fly in fog; the vision system is unavailable in low visibility.', src: 'User manual p. 48', cond: { temp: 6, rh: 100 }, t: () => 0.4, view: 'three' },
+  { id: 'lens-fog', level: 'caution', title: 'Hot, humid take-off fogs the lenses', text: 'At 34 °C and 72 % humidity the dew point is about 28 °C. A camera kept in a cooled cabin (assumed 25 °C) is colder than that, so its lenses fog once it leaves the dock. The cameras support lens defogging.', src: 'Spec sheet · cabin temperature assumed', cond: { temp: 34, rh: 72 }, t: () => fr('loop0') + 1.2, view: 'follow', pin: 'A1' },
+  { id: 'wind', level: 'hold', title: 'Wind above 12 m/s', text: 'The wind speed gauge reads 14 m/s. The aircraft cannot take off or land in the dock above 12 m/s; mid-flight it diverts to the alternate landing site.', src: 'User manual pp. 31, 48 · Spec sheet', cond: { wind: 14 }, t: () => 0.4, view: 'three', pin: '1' },
+  { id: 'rain', level: 'hold', title: 'Rain above 2 mm/h', text: 'The rainfall gauge reports 4 mm/h. DJI says not to fly when rainfall exceeds 2 mm per hour, even though the aircraft is rated IP55.', src: 'User manual pp. 24, 31', cond: { temp: 12, rh: 95, precip: 4 }, t: () => 0.4, view: 'three', pin: '4' },
+  { id: 'metal', level: 'caution', title: 'Metal object on the charging pad', text: 'A steel ring left on the pad sits in the charging field and heats up while the aircraft charges. It can damage the pad and cause burns, so keep the pad clear of metal.', src: 'Installation manual p. 7 · Safety guidelines', cond: { metal: true }, t: () => fr('charge0') + 2.5, view: 'pad' },
+  { id: 'estop', level: 'hold', title: 'Emergency stop pressed', text: 'With the emergency stop pressed the cover will not open or close, and the status lights blink red and yellow alternately. Release it before the next flight.', src: 'Installation manual pp. 7–8', cond: { estop: true }, t: () => 0.4, view: 'three', pin: '15' },
+  { id: 'power', level: 'caution', title: 'Power cut while charging', text: 'The backup battery runs the dock for more than 4 hours, but charging, air conditioning, cover heating and wind gauge heating stop, so the aircraft stays at 15 %.', src: 'Spec sheet', cond: { power: false }, t: () => fr('charge0') + 2, view: 'pad', pin: 'A14' },
+  { id: 'flood', level: 'hold', title: 'Flood water reaches the dock', text: 'Water above the brackets enters the lower compartment and trips the water immersion sensor: disconnect power and remove the water. Mount the base more than 100 mm above the highest recorded water level.', src: 'User manual p. 31 · Maintenance manual p. 18 · Installation manual p. 24', cond: { water: 18 }, t: () => 0.4, view: 'three', pin: '21' },
+];
+for (const it of ISSUES) {
+  const li = document.createElement('li');
+  li.innerHTML = `<button type="button" class="issue" data-issue="${it.id}" aria-pressed="false"><span class="sev ${it.level}">${it.level}</span><span><b></b><span class="sum"></span><span class="src"></span></span></button>`;
+  li.querySelector('b').textContent = it.title;
+  li.querySelector('.sum').textContent = it.text;
+  li.querySelector('.src').textContent = it.src;
+  li.querySelector('button').addEventListener('click', () => applyIssue(it));
+  $('#issues').appendChild(li);
+}
+function markIssue(id) { $$('.issue').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.issue === id))); }
+function applyIssue(it) {
+  if (!root) return;
+  cond = { ...COND0, ...it.cond };
+  markIssue(it.id);
+  conditionsChanged();
+  setTime(it.t());
+  setPlaying(true);
+  setView(it.view || 'three');
+  select(it.pin || null, false);
+}
+
+// ====================================================================== tabs
+const TABS = ['Model', 'Conditions', 'Issues'];
+function showTab(name) {
+  for (const n of TABS) { $('#tab' + n).setAttribute('aria-selected', String(n === name)); $('#panel' + n).hidden = n !== name; }
+  try { localStorage.setItem('dock3-tab55', name); } catch {}
+}
+TABS.forEach((n) => $('#tab' + n).addEventListener('click', () => showTab(n)));
+$('.tabs').addEventListener('keydown', (e) => {
+  if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
+  const i = TABS.findIndex((n) => $('#tab' + n).getAttribute('aria-selected') === 'true');
+  const n = TABS[(i + (e.key === 'ArrowRight' ? 1 : TABS.length - 1)) % TABS.length];
+  showTab(n);
+  $('#tab' + n).focus();
+});
+try { const saved = localStorage.getItem('dock3-tab55'); if (TABS.includes(saved)) showTab(saved); } catch {}
+
+// ====================================================================== callouts
+const pinsEl = $('#pins');
+const tag = document.createElement('div');
+tag.className = 'tag';
+tag.hidden = true;
+pinsEl.appendChild(tag);
+function addPin(obj) {
+  const id = String(obj.userData.hotspot), label = obj.userData.label || id, group = obj.userData.group || 'dock';
+  const el = document.createElement('button');
+  el.type = 'button';
+  el.className = 'pin' + (id.length > 2 ? ' wide' : '');
+  el.textContent = id;
+  el.setAttribute('aria-label', `${id}: ${label}`);
+  el.setAttribute('aria-pressed', 'false');
+  el.title = label;
+  el.addEventListener('click', () => select(id, true));
+  pinsEl.appendChild(el);
+  pins.push({ obj, id, label, group, el });
+}
+function select(id, fly) {
+  selected = id || null;
+  for (const p of pins) p.el.setAttribute('aria-pressed', String(p.id === selected));
+  $$('.parts button[data-id]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.id === selected)));
+  const p = pins.find((q) => q.id === selected);
+  if (!p) { tag.hidden = true; return; }
+  tag.innerHTML = '<b></b><span></span>';
+  tag.querySelector('b').textContent = p.id;
+  tag.querySelector('span').textContent = p.label;
+  if (p.group === 'aircraft' && !$('#lyrAircraft').checked) { $('#lyrAircraft').checked = true; aircraft.visible = true; }
+  if (!$('#lyrPins').checked) $('#lyrPins').checked = true;
+  if (fly) {
+    setFollow(false);
+    p.obj.getWorldPosition(v3);
+    const dir = camera.position.clone().sub(controls.target).normalize();
+    if (dir.y < 0.15) dir.y = 0.35;
+    flyTo(v3.clone().addScaledVector(dir.normalize(), 1.05), v3.clone());
+    markView(null);
+  }
+}
+function flyTo(pos, target) {
+  if (reduced) { camera.position.copy(pos); controls.target.copy(target); controls.update(); return; }
+  flight = { p0: camera.position.clone(), t0: controls.target.clone(), p1: pos, t1: target, start: performance.now(), dur: 800 };
+}
+let lastOcc = 0;
+const raycaster = new THREE.Raycaster();
+const occludes = (i) => i.object.visible && !i.object.userData.noOcclude && !(i.object.material && i.object.material.opacity < 0.5);
+function updatePins(now) {
+  const on = $('#lyrPins').checked;
+  pinsEl.hidden = !on;
+  if (!on) return;
+  const w = stage.clientWidth, h = stage.clientHeight, doOcc = now - lastOcc > 220;
+  if (doOcc) lastOcc = now;
+  const targets = [dock];          // the dock only: ray-casting DJI's 128k-face airframe every frame would stutter
+  for (const p of pins) {
+    p.obj.getWorldPosition(v3);
+    v3b.copy(v3).project(camera);
+    const vis = !(p.group === 'aircraft' && !aircraft.visible) && v3b.z < 1 && Math.abs(v3b.x) < 1.02 && Math.abs(v3b.y) < 1.02;
+    p.el.hidden = !vis;
+    if (!vis) continue;
+    const x = (v3b.x * 0.5 + 0.5) * w, y = (-v3b.y * 0.5 + 0.5) * h;
+    p.el.style.transform = `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px)`;
+    if (doOcc) {
+      const dir = v3.clone().sub(camera.position), dist = dir.length();
+      raycaster.set(camera.position, dir.normalize());
+      raycaster.far = Math.max(0, dist - 0.03);
+      p.el.classList.toggle('occ', raycaster.intersectObjects(targets, true).some(occludes));
+    }
+    if (p.id === selected) tag.style.transform = `translate(${(x + 18).toFixed(1)}px, ${(y - 15).toFixed(1)}px)`;
+  }
+  const sp = pins.find((q) => q.id === selected);
+  tag.hidden = !sp || sp.el.hidden;
+}
+
+// ====================================================================== views + layers
+function markView(name) { $$('[data-view]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.view === name))); }
+function setFollow(on) { follow = on; if (on) markView('follow'); }
+function setView(name, instant) {
+  if (name === 'follow') {
+    aircraft.getWorldPosition(v3);
+    setFollow(true);
+    const pos = v3.clone().add(new THREE.Vector3(1.25, 0.75, 1.55));
+    if (instant) { camera.position.copy(pos); controls.target.copy(v3); } else flyTo(pos, v3.clone());
+    return;
+  }
+  setFollow(false);
+  markView(name === 'pad' ? null : name);
+  const v = VIEWS[name] || VIEWS.three, off = root ? root.position.y : 0;
+  const pos = new THREE.Vector3(v.p[0], v.p[1] + off, v.p[2]), tgt = new THREE.Vector3(v.t[0], v.t[1] + off, v.t[2]);
+  if (instant) { camera.position.copy(pos); controls.target.copy(tgt); controls.update(); } else flyTo(pos, tgt);
+}
+$$('[data-view]').forEach((b) => b.addEventListener('click', () => setView(b.dataset.view)));
+controls.addEventListener('start', () => { flight = null; });
+$('#lyrBox').addEventListener('change', (e) => { if (envBox) envBox.visible = e.target.checked; });
+$('#lyrBase').addEventListener('change', () => { if (site) site.visible = $('#lyrBase').checked && cond.base > 0; });
+$('#lyrFence').addEventListener('change', (e) => { if (fence) fence.visible = e.target.checked; });
+$('#lyrAircraft').addEventListener('change', (e) => { if (aircraft) aircraft.visible = e.target.checked; if (!e.target.checked && follow) setView('three'); });
+
+// ====================================================================== per-frame dynamics
+const STATUS = { white: new THREE.Color(1, 1, 1), red: new THREE.Color(1, 0.08, 0.04), green: new THREE.Color(0.15, 1, 0.3), yellow: new THREE.Color(1, 0.72, 0.02), off: new THREE.Color(0.22, 0.24, 0.26) };
+let ghostK = -1;
+const cells = $$('#cells i');
+function applyDynamics(now, dt) {
+  const secs = now / 1000, blink = Math.floor(secs * 2) % 2 === 0;
+  const charging = inRange('charge0', 'charge1');
+  const u = charging ? (t - fr('charge0')) / (fr('charge1') - fr('charge0')) : 0;
+
+  let col;
+  if (cond.estop) col = blink ? 'red' : 'yellow';
+  else if (inRange('open0', 'open1') || inRange('close0', 'close1') || inRange('spin0', 'up1') || inRange('down0', 'stop1')) col = blink ? 'red' : 'off';
+  else if (inRange('up1', 'down0')) col = blink ? 'green' : 'off';
+  else col = blink ? 'white' : 'off';
+  statusMat.emissive.copy(STATUS[col]);
+  statusMat.emissiveIntensity = col === 'off' ? 0.05 : 6;
+  statusMat.color.copy(col === 'off' ? STATUS.off : STATUS[col]);
+
+  nodes.Dock_ChargeCoil.visible = cond.power;
+  nodes.field.forEach((f) => { f.visible = cond.power; });
+  const lvl = batteryAt(t), pat = ledPattern(lvl, t);
+  if (!cond.power && charging) nodes.leds.forEach((l, i) => l.scale.setScalar(pat[i] === 'on' ? 1 : 0));
+  const fade = smooth((t - fr('charge0')) / 0.4) * smooth((fr('charge1') - t) / 0.4);
+  extras.glow.intensity = charging && cond.power ? fade * (0.22 + 0.1 * Math.sin(t * Math.PI * 2)) : 0;
+  const heat = cond.metal && charging && cond.power ? smooth(u * 3) : 0;
+  extras.ringMat.emissiveIntensity = heat * 5;
+  extras.ringMat.color.setRGB(0.6 + heat * 0.4, 0.63 - heat * 0.2, 0.66 - heat * 0.4);
+
+  const k = $('#lyrCutaway').checked && charging ? fade : 0;
+  if (Math.abs(k - ghostK) > 1e-3) {
+    const tr = k > 0.001;
+    for (const mat of cover.base.keys()) {
+      if (mat.transparent !== tr) { mat.transparent = tr; mat.needsUpdate = true; }
+      mat.opacity = 1 - 0.84 * k;
+      mat.depthWrite = k < 0.5;
+    }
+    for (const m of cover.meshes) m.castShadow = k < 0.5;
+    ghostK = k;
+  }
+  const lidAngle = 2 * Math.acos(Math.min(1, Math.abs(nodes.Lid_R.quaternion.w)));
+  for (const c of extras.caps) c.visible = lidAngle < 0.05 && k < 0.3;
+  for (const d of extras.drops) d.visible = E.dew && k < 0.3;
+
+  const airborne = t > fr('up0') && t < fr('down1');
+  const fogged = E.lensRisk && airborne ? smooth((t - fr('up0')) / 1.5) * (1 - smooth((t - fr('loop1')) / 2)) : 0;
+  lensMat.color.copy(lensBase.color).lerp(new THREE.Color(0.72, 0.76, 0.79), fogged);
+  lensMat.roughness = lensBase.roughness + (0.7 - lensBase.roughness) * fogged;
+  nodes.Lid_R_WindRotor.rotation.y += cond.wind * 1.1 * dt;
+
+  const snowing = cond.precip > 0 && cond.temp <= 0, raining = cond.precip > 0 && cond.temp > 0;
+  const n = snowing ? Math.min(PMAX, Math.round(700 + cond.precip * 520)) : raining ? Math.min(PMAX, Math.round(cond.precip * 520)) : 0;
+  snowPts.visible = snowing;
+  rainLines.visible = raining;
+  if (n) {
+    const floor = particleFloor(), wx = cond.wind;
+    for (let i = 0; i < n; i++) {
+      const j = i * 3;
+      if (snowing) { pPos[j + 1] -= (0.75 + (i % 7) * 0.05) * dt; pPos[j] += (wx * 0.45 + Math.sin(secs * 1.3 + i) * 0.25) * dt; }
+      else { pPos[j + 1] -= 7.5 * dt; pPos[j] += wx * 0.3 * dt; }
+      if (pPos[j + 1] < floor) respawn(i, false);
+      if (pPos[j] > 3.5) pPos[j] -= 7;
+      if (raining) {
+        const r = i * 6;
+        rPos[r] = pPos[j]; rPos[r + 1] = pPos[j + 1]; rPos[r + 2] = pPos[j + 2];
+        rPos[r + 3] = pPos[j] - wx * 0.012; rPos[r + 4] = pPos[j + 1] + 0.15; rPos[r + 5] = pPos[j + 2];
+      }
+    }
+    if (snowing) { snowPts.geometry.setDrawRange(0, n); snowPts.geometry.attributes.position.needsUpdate = true; }
+    if (raining) { rainLines.geometry.setDrawRange(0, n * 2); rainLines.geometry.attributes.position.needsUpdate = true; }
+  }
+
+  const mission = $('#mission'), meter = $('#meter');
+  cells.forEach((c, i) => { c.className = pat[i]; });
+  mission.classList.toggle('held', !!held);
+  mission.classList.toggle('charging', !held && charging);
+  if (held) meter.innerHTML = `<b>Held</b> · ${held.title}`;
+  else if (charging) meter.innerHTML = cond.power
+    ? `<b>${Math.round(lvl)} %</b> · ${Math.round(u * TL.battery.charge_minutes)} of ${TL.battery.charge_minutes} min · ${TL.battery.output_v} V DC`
+    : `<b>${Math.round(lvl)} %</b> · charging paused, no mains power`;
+  else meter.innerHTML = `<b>${Math.round(lvl)} %</b> battery`;
+}
+
+// ====================================================================== loop
+const clock = new THREE.Clock();
+const ease = (x) => (x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2);
+let lastHeld = null;
+function tick() {
+  const dt = Math.min(clock.getDelta(), 0.1), now = performance.now();
+  if (playing) {
+    let next = t + dt * speed, hMin = Infinity, hc = null;
+    for (const c of E.checks) {
+      if (!c.holdAt) continue;
+      const h = c.holdAt(t);
+      if (h == null || h < t - 1e-4) continue;
+      if (h < hMin) { hMin = h; hc = c; }
+    }
+    if (hc && next >= hMin) { next = hMin; held = hc; } else held = null;
+    if (next >= duration) next -= duration;
+    if (Math.abs(next - t) > 1e-6 || !held) setTime(next);
+  } else held = null;
+  if (held !== lastHeld) { lastHeld = held; renderAlerts(); }
+  if (flight) {
+    const k = Math.min(1, (now - flight.start) / flight.dur), e = ease(k);
+    camera.position.lerpVectors(flight.p0, flight.p1, e);
+    controls.target.lerpVectors(flight.t0, flight.t1, e);
+    if (k >= 1) flight = null;
+  }
+  if (follow && aircraft && !flight) {
+    aircraft.getWorldPosition(v3);
+    v3b.copy(v3).sub(controls.target);
+    controls.target.add(v3b);
+    camera.position.add(v3b);
+  }
+  controls.update();
+  applyDynamics(now, dt);
+  if (measureSoon && now - lastMeasure > 80) { measure(); measureSoon = false; lastMeasure = now; }
+  updatePins(now);
+  composer.render(dt);
+}
+
+syncControls();
+E = evaluate();
+renderChecks();
+resize();
+load().catch((err) => { $('#loading').textContent = `The model didn't load: ${err.message}. Reload the page to try again.`; console.error(err); });
+</script>
